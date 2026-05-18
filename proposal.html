@@ -365,7 +365,7 @@
     margin-top: 2px;
   }
 
-  /* ── PAGE INDICATOR ───────────────────────── */
+  /* ── PAGE INDICATOR (inline, hidden) ─────── */
   .page-note {
     display: none !important;
     visibility: hidden !important;
@@ -374,6 +374,22 @@
     padding: 0 !important;
     border: none !important;
     overflow: hidden !important;
+  }
+
+  /* ── FIXED FOOTER ─────────────────────────── */
+  #page-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: #fff;
+    border-top: 1px solid #e0e7ff;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #9ca3af;
+    letter-spacing: 0.05em;
+    padding: 7px 20px;
+    flex-shrink: 0;
   }
 
   /* ── DATA TABLE ───────────────────────────── */
@@ -3659,12 +3675,24 @@
 <script>
   const TOTAL = 45;
   let cur = 0;
+  let activeLang = 'en';
+
+  function updateFooter() {
+    const pg = cur + 1;
+    const footer = document.getElementById('page-footer');
+    if (activeLang === 'te') {
+      footer.textContent = 'రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ ' + pg;
+    } else {
+      footer.textContent = 'CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page ' + pg;
+    }
+  }
 
   function goTo(n) {
     if (n < 0) n = TOTAL - 1;
     if (n >= TOTAL) n = 0;
     cur = n;
     document.getElementById('track').style.transform = 'translateX(-' + (n * 100) + '%)';
+    updateFooter();
   }
 
   document.addEventListener('keydown', e => {
@@ -3673,23 +3701,21 @@
   });
 
   function setLang(lang) {
+    activeLang = lang;
     document.querySelectorAll('.en').forEach(el =>
       lang === 'en' ? el.classList.remove('hidden') : el.classList.add('hidden'));
     document.querySelectorAll('.te').forEach(el =>
       lang === 'te' ? el.classList.remove('hidden') : el.classList.add('hidden'));
     document.getElementById('btn-en').classList.toggle('active', lang === 'en');
     document.getElementById('btn-te').classList.toggle('active', lang === 'te');
+    updateFooter();
   }
 
   setLang('en');
-
-  // Strip page numbers from all .page-note elements
-  document.querySelectorAll('.page-note').forEach(el => {
-    el.textContent = el.textContent
-      .replace(/\s*[—·]\s*Page\s*[\d–\-]+(\s*\(.*?\))?/gi, '')
-      .replace(/\s*[—·]\s*పేజీ\s*[\d–\-]+(\s*\(.*?\))?/g, '')
-      .trim();
-  });
 </script>
+
+<!-- FIXED FOOTER -->
+<div id="page-footer">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 1</div>
+
 </body>
 </html>
