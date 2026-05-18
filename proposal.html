@@ -8,7 +8,7 @@
 <style>
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 18px; }
+  html { font-size: clamp(12px, 1.1vw, 18px); }
   html, body { height: 100%; overflow: hidden; }
 
   body {
@@ -26,7 +26,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 60px;
+    padding: 12px clamp(16px, 4vw, 60px);
     border-bottom: 1px solid #e0e7ff;
     background: #fff;
     flex-shrink: 0;
@@ -98,7 +98,7 @@
     overflow-y: auto;
     display: flex;
     justify-content: center;
-    padding: 44px 80px 60px;
+    padding: clamp(18px, 3vh, 44px) clamp(16px, 5vw, 80px) clamp(22px, 5vh, 60px);
     scrollbar-width: none;       /* Firefox */
     -ms-overflow-style: none;    /* IE / Edge */
   }
@@ -108,7 +108,7 @@
 
   .slide-inner {
     width: 100%;
-    max-width: 950px;
+    max-width: min(950px, 100%);
   }
 
   /* ══════════════════════════════════
@@ -139,7 +139,7 @@
   }
 
   .cover-title {
-    font-size: 3.6rem;
+    font-size: clamp(1.8rem, 3.5vw, 3.6rem);
     font-weight: 900;
     line-height: 1.08;
     letter-spacing: -0.025em;
@@ -180,6 +180,7 @@
 
   .submit-box {
     display: flex;
+    flex-wrap: wrap;
     border: 1.5px solid #e0e7ff;
     border-radius: 16px;
     overflow: hidden;
@@ -190,7 +191,8 @@
 
   .submit-col {
     flex: 1;
-    padding: 26px 32px;
+    min-width: 220px;
+    padding: clamp(14px, 2vw, 26px) clamp(16px, 2.5vw, 32px);
   }
 
   .submit-col:first-child {
@@ -225,7 +227,7 @@
   }
 
   .sec-title {
-    font-size: 2.4rem; font-weight: 900;
+    font-size: clamp(1.5rem, 2.4vw, 2.4rem); font-weight: 900;
     color: #1e1b4b; line-height: 1.15;
     margin-bottom: 8px;
   }
@@ -405,8 +407,14 @@
   .data-table tbody td:first-child {
     font-weight: 700;
     color: #3730a3;
-    white-space: nowrap;
-    width: 30%;
+    white-space: normal;
+    width: 28%;
+  }
+
+  /* Table scroll on very small viewports */
+  .table-wrap {
+    overflow-x: auto;
+    width: 100%;
   }
 
 
