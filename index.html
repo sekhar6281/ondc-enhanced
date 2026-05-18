@@ -3766,10 +3766,20 @@
   });
 
   function goTo(n) {
+    const wrap = (n < 0 || n >= TOTAL);
     if (n < 0) n = TOTAL - 1;
     if (n >= TOTAL) n = 0;
     cur = n;
-    document.getElementById('track').style.transform = 'translateX(-' + (n * 100) + '%)';
+    const track = document.getElementById('track');
+    if (wrap) {
+      /* Wrap-around: disable transition → instant jump → restore transition */
+      track.style.transition = 'none';
+      track.style.transform = 'translateX(-' + (n * 100) + '%)';
+      track.offsetHeight; /* force reflow */
+      track.style.transition = '';
+    } else {
+      track.style.transform = 'translateX(-' + (n * 100) + '%)';
+    }
   }
 
   document.addEventListener('keydown', e => {
