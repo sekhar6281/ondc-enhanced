@@ -417,6 +417,93 @@
     width: 100%;
   }
 
+  /* ══════════════════════════════════
+     MOBILE VIEW  (≤ 768px)
+     Laptop view is untouched above
+  ══════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* Bigger base font — old people can read comfortably */
+    html { font-size: 17px; }
+
+    /* ── Header ── */
+    header {
+      padding: 10px 14px;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      order: 1;
+      font-size: 0.82rem;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .logo-box {
+      width: 30px; height: 30px;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .lang-toggle {
+      order: 2;
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+    }
+
+    /* ── Slide padding ── */
+    .slide {
+      padding: 20px 16px 28px;
+    }
+
+    /* ── Cover ── */
+    .cover-title     { font-size: 2rem; }
+    .cover-subtitle  { font-size: 1.1rem; }
+    .cover-tagline   { font-size: 1rem; line-height: 1.85; }
+    .cover-vision    { font-size: 1rem; }
+    .badge           { font-size: 0.78rem; padding: 9px 18px; }
+
+    .submit-box      { flex-direction: column; }
+    .submit-col:first-child { border-right: none; border-bottom: 1.5px solid #e0e7ff; }
+
+    /* ── Section heading ── */
+    .sec-title  { font-size: 1.6rem; }
+    .sec-label  { font-size: 0.72rem; }
+
+    /* ── Body text ── */
+    .body-text        { font-size: 1.1rem; line-height: 2; }
+    .bullet-list li   { font-size: 1.1rem; line-height: 1.95; gap: 10px; }
+    .sub-head         { font-size: 1.2rem; }
+    .hb-text          { font-size: 1.05rem; line-height: 1.95; }
+    .highlight-box    { padding: 18px 18px; }
+
+    /* ── Layer cards ── */
+    .layer-body       { flex-direction: column; }
+    .layer-desc       { border-right: none; border-bottom: 1.5px solid #e0e7ff; }
+    .layer-owner      { padding: 14px 18px; }
+    .layer-desc,
+    .layer-owner      { font-size: 1.05rem; }
+
+    /* ── Tables ── */
+    .data-table       { font-size: 1rem; display: block; overflow-x: auto; }
+    .data-table thead th { padding: 11px 12px; font-size: 1rem; }
+    .data-table tbody td { padding: 11px 12px; }
+    .data-table tbody td:first-child { width: auto; }
+
+    /* ── Page note ── */
+    .page-note { font-size: 0.78rem; margin-top: 28px; }
+  }
 
 </style>
 </head>
@@ -3689,6 +3776,23 @@
     if (e.key === 'ArrowRight') goTo(cur + 1);
     if (e.key === 'ArrowLeft')  goTo(cur - 1);
   });
+
+  /* ── Touch / Swipe navigation ── */
+  let _tx = 0, _ty = 0;
+  const vp = document.querySelector('.viewport');
+  vp.addEventListener('touchstart', e => {
+    _tx = e.touches[0].clientX;
+    _ty = e.touches[0].clientY;
+  }, { passive: true });
+  vp.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _tx;
+    const dy = e.changedTouches[0].clientY - _ty;
+    /* Only trigger on clearly horizontal swipes (dx dominant, > 40px) */
+    if (Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dx) > 40) {
+      if (dx < 0) goTo(cur + 1);  /* swipe left  → next slide */
+      else        goTo(cur - 1);  /* swipe right → prev slide (wraps to last) */
+    }
+  }, { passive: true });
 
   function setLang(lang) {
     document.querySelectorAll('.en').forEach(el =>
