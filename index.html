@@ -1,0 +1,3706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AP Commerce Stack — ONDC Nodal Implementation Proposal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: clamp(12px, 1.1vw, 18px); }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: #1e1b4b;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ── HEADER ───────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px clamp(16px, 4vw, 60px);
+    border-bottom: 1px solid #e0e7ff;
+    background: #fff;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: #3730a3;
+  }
+
+  .logo-box {
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    color: #fff;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 1rem;
+  }
+
+  .lang-toggle {
+    display: flex;
+    background: #eef2ff;
+    border-radius: 50px;
+    padding: 4px; gap: 2px;
+  }
+
+  .lang-btn {
+    padding: 9px 26px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: #4338ca;
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+  }
+
+  .lang-btn.active {
+    background: #4f46e5;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(79,70,229,0.35);
+  }
+
+  /* ── SLIDE VIEWPORT ───────────────────────── */
+  .viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── SLIDES TRACK ─────────────────────────── */
+  .track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.45s cubic-bezier(0.77,0,0.18,1);
+  }
+
+  /* ── SINGLE SLIDE ─────────────────────────── */
+  .slide {
+    min-width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    padding: clamp(18px, 3vh, 44px) clamp(16px, 5vw, 80px) clamp(22px, 5vh, 60px);
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE / Edge */
+  }
+  .slide::-webkit-scrollbar {
+    display: none;               /* Chrome / Safari */
+  }
+
+  .slide-inner {
+    width: 100%;
+    max-width: min(950px, 100%);
+  }
+
+  /* ══════════════════════════════════
+     SLIDE 1 — COVER
+  ══════════════════════════════════ */
+  .cover {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    padding: 11px 26px;
+    border-radius: 50px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+  }
+
+  .cover-title {
+    font-size: clamp(1.8rem, 3.5vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: #1e1b4b;
+    margin-bottom: 8px;
+  }
+
+  .cover-title .accent { color: #4f46e5; }
+
+  .divider {
+    width: 56px; height: 5px;
+    background: linear-gradient(90deg,#4f46e5,#7c3aed);
+    border-radius: 2px;
+    margin: 22px auto 26px;
+  }
+
+  .cover-subtitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #4f46e5;
+    margin-bottom: 14px;
+  }
+
+  .cover-tagline {
+    font-size: 1.05rem;
+    color: #4b5563;
+    line-height: 1.8;
+    max-width: 720px;
+    margin: 0 auto 16px;
+  }
+
+  .cover-vision {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    margin-bottom: 36px;
+  }
+
+  .submit-box {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 720px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .submit-col {
+    flex: 1;
+    min-width: 220px;
+    padding: clamp(14px, 2vw, 26px) clamp(16px, 2.5vw, 32px);
+  }
+
+  .submit-col:first-child {
+    background: #fafafa;
+    border-right: 1.5px solid #e0e7ff;
+  }
+
+  .s-label {
+    font-size: 0.72rem; font-weight: 800;
+    letter-spacing: 0.16em; color: #6366f1;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  .s-name {
+    font-size: 1rem; font-weight: 700;
+    color: #1e1b4b; margin-bottom: 8px;
+  }
+
+  .s-detail {
+    font-size: 0.9rem; color: #4b5563;
+    line-height: 1.75;
+  }
+
+  /* ══════════════════════════════════
+     SLIDES 2 & 3 — CONTENT
+  ══════════════════════════════════ */
+  .sec-label {
+    font-size: 0.75rem; font-weight: 800;
+    letter-spacing: 0.14em; color: #6366f1;
+    text-transform: uppercase;
+    display: block; margin-bottom: 14px;
+  }
+
+  .sec-title {
+    font-size: clamp(1.5rem, 2.4vw, 2.4rem); font-weight: 900;
+    color: #1e1b4b; line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  .sec-title .accent { color: #4f46e5; }
+
+  .sec-divider {
+    width: 48px; height: 5px;
+    background: linear-gradient(90deg,#4f46e5,#7c3aed);
+    border-radius: 2px; margin-bottom: 34px;
+  }
+
+  .body-text {
+    font-size: 1.13rem;
+    line-height: 1.95;
+    color: #374151;
+    margin-bottom: 26px;
+  }
+
+  .body-text strong { color: #1e1b4b; }
+
+  .highlight-box {
+    background: #f5f3ff;
+    border-left: 6px solid #4f46e5;
+    border-radius: 0 14px 14px 0;
+    padding: 28px 32px;
+    margin-top: 28px;
+  }
+
+  .hb-label {
+    font-size: 0.75rem; font-weight: 800;
+    letter-spacing: 0.14em; color: #6366f1;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  .hb-text {
+    font-size: 1.08rem;
+    line-height: 1.9;
+    color: #1e1b4b;
+    font-weight: 500;
+  }
+
+  /* ── LAYER CARD ───────────────────────────── */
+  .layer-card {
+    border: 1.5px solid #e0e7ff;
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 24px 0;
+  }
+
+  .layer-header {
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    color: #fff;
+    padding: 14px 24px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+  }
+
+  .layer-body {
+    display: flex;
+    border-top: 1.5px solid #e0e7ff;
+  }
+
+  .layer-desc {
+    flex: 2;
+    padding: 18px 24px;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #374151;
+    border-right: 1.5px solid #e0e7ff;
+  }
+
+  .layer-owner {
+    flex: 1;
+    padding: 18px 20px;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: #4338ca;
+    font-weight: 600;
+    background: #f5f3ff;
+  }
+
+  .layer-owner-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #6366f1;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  /* ── SUB HEADING ─────────────────────────── */
+  .sub-head {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #3730a3;
+    margin: 32px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sub-head::before {
+    content: '';
+    display: inline-block;
+    width: 5px; height: 22px;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ── BULLET LIST ──────────────────────────── */
+  .bullet-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 20px;
+  }
+
+  .bullet-list li {
+    display: flex;
+    gap: 14px;
+    font-size: 1.1rem;
+    line-height: 1.85;
+    color: #374151;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .bullet-list li:last-child { border-bottom: none; }
+
+  .bullet-list li .arr {
+    color: #4f46e5;
+    font-weight: 900;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── PAGE INDICATOR ───────────────────────── */
+  .page-note {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    letter-spacing: 0.05em;
+    margin-top: 38px;
+    padding-top: 14px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  /* ── DATA TABLE ───────────────────────────── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+    font-size: 1.05rem;
+  }
+  .data-table thead tr {
+    background: linear-gradient(90deg,#4f46e5,#7c3aed);
+    color: #fff;
+  }
+  .data-table thead th {
+    padding: 13px 18px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+  .data-table tbody tr:nth-child(odd)  { background: #f5f3ff; }
+  .data-table tbody tr:nth-child(even) { background: #fff; }
+  .data-table tbody td {
+    padding: 14px 18px;
+    vertical-align: top;
+    line-height: 1.7;
+    color: #374151;
+    border-bottom: 1px solid #e0e7ff;
+  }
+  .data-table tbody td:first-child {
+    font-weight: 700;
+    color: #3730a3;
+    white-space: normal;
+    width: 28%;
+  }
+
+  /* Table scroll on very small viewports */
+  .table-wrap {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-box">A</div>
+    AP Commerce Stack
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn"        id="btn-te" onclick="setLang('te')">TE</button>
+  </div>
+</header>
+
+<!-- VIEWPORT -->
+<div class="viewport">
+  <div class="track" id="track">
+
+    <!-- ════════════════════════════════
+         SLIDE 1 — COVER
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="cover en">
+          <div class="badge">✦ &nbsp;AP COMMERCE STACK</div>
+          <h1 class="cover-title">AP <span class="accent">Commerce</span> Stack</h1>
+          <div class="divider"></div>
+          <p class="cover-subtitle">Andhra Pradesh ONDC Nodal Implementation Proposal</p>
+          <p class="cover-tagline">
+            Unifying ONDC Protocol, State Commerce Infrastructure &amp; Digital Bharat Mission<br>
+            into a Single Government-Owned Revenue and Governance Engine for Andhra Pradesh
+          </p>
+          <p class="cover-vision">
+            "One Entrepreneur per One Family" — CM's Vision &nbsp;|&nbsp; Delivery Vehicle: AP Commerce Stack
+          </p>
+          <div class="submit-box">
+            <div class="submit-col">
+              <div class="s-label">Submitted By</div>
+              <div class="s-name">Zian Technologies LLP</div>
+              <div class="s-detail">
+                Proposed Nodal Agency &amp; Technology Service Provider<br>
+                AP Commerce Stack on ONDC<br>
+                Visakhapatnam, Andhra Pradesh
+              </div>
+            </div>
+            <div class="submit-col">
+              <div class="s-label">Submitted To</div>
+              <div class="s-name">Government of Andhra Pradesh</div>
+              <div class="s-detail">
+                Department of IT&amp;C / Commerce &amp; Industries<br>
+                Engagement Duration: 36 Months (Extendable)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TE -->
+        <div class="cover te hidden">
+          <div class="badge">✦ &nbsp;ఏపీ కామర్స్ స్టాక్</div>
+          <h1 class="cover-title">ఏపీ <span class="accent">కామర్స్</span> స్టాక్</h1>
+          <div class="divider"></div>
+          <p class="cover-subtitle">ఆంధ్రప్రదేశ్ ONDC నోడల్ అమలు ప్రతిపాదన</p>
+          <p class="cover-tagline">
+            ONDC ప్రోటోకాల్, రాష్ట్ర వాణిజ్య మౌలిక సదుపాయాలు &amp; డిజిటల్ భారత్ మిషన్‌ను<br>
+            ఆంధ్రప్రదేశ్ కోసం ఒకే ప్రభుత్వ-యాజమాన్య ఆదాయ మరియు పాలన యంత్రంగా ఏకీకరించడం
+          </p>
+          <p class="cover-vision">
+            "ప్రతి కుటుంబానికి ఒక పారిశ్రామికవేత్త" — సీఎం దృష్టి &nbsp;|&nbsp; అమలు వాహనం: ఏపీ కామర్స్ స్టాక్
+          </p>
+          <div class="submit-box">
+            <div class="submit-col">
+              <div class="s-label">సమర్పించిన వారు</div>
+              <div class="s-name">జియాన్ టెక్నాలజీస్ LLP</div>
+              <div class="s-detail">
+                ప్రతిపాదిత నోడల్ ఏజెన్సీ &amp; టెక్నాలజీ సర్వీస్ ప్రొవైడర్<br>
+                ONDC పై AP కామర్స్ స్టాక్<br>
+                విశాఖపట్నం, ఆంధ్రప్రదేశ్
+              </div>
+            </div>
+            <div class="submit-col">
+              <div class="s-label">సమర్పించిన వారికి</div>
+              <div class="s-name">ఆంధ్రప్రదేశ్ ప్రభుత్వం</div>
+              <div class="s-detail">
+                IT&amp;C / వాణిజ్యం &amp; పరిశ్రమల విభాగం<br>
+                నిమగ్నత వ్యవధి: 36 నెలలు (పొడిగించదగినది)
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /slide 1 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 2 — EXEC SUMMARY Para 1&2
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 1</span>
+          <h2 class="sec-title">Executive <span class="accent">Summary</span></h2>
+          <div class="sec-divider"></div>
+          <p class="body-text">
+            The Government of Andhra Pradesh stands at a singular inflection point. The Open Network for
+            Digital Commerce (ONDC) — a protocol-based national digital commerce infrastructure mandated
+            by the Department for Promotion of Industry and Internal Trade (DPIIT), Government of India —
+            is operational and expanding. Every transaction flowing through AP's commerce ecosystem —
+            food delivery, grocery, ticket booking, agri produce, MSME products, GI-tagged heritage goods,
+            and freelance services — currently generates <strong>zero direct revenue</strong> for the state exchequer.
+            Private aggregators and national platforms extract value from AP's producers, sellers, and
+            consumers while the state government remains a passive bystander.
+          </p>
+          <p class="body-text">
+            Zian Technologies LLP proposes to change this architecture permanently. This document
+            constitutes a formal proposal for the establishment of the <strong>Andhra Pradesh Commerce Stack
+            (APCS)</strong> — a state-owned digital commerce middleware layer on ONDC — with Zian Technologies
+            designated as both the Nodal Agency accountable to the Government of Andhra Pradesh, and the
+            Technology Service Provider (TSP) responsible for design, development, deployment, and
+            ongoing operations of the platform.
+          </p>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 2</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 1</span>
+          <h2 class="sec-title">కార్యనిర్వాహక <span class="accent">సారాంశం</span></h2>
+          <div class="sec-divider"></div>
+          <p class="body-text">
+            ఆంధ్రప్రదేశ్ ప్రభుత్వం ఒక ప్రత్యేకమైన మలుపు దగ్గర నిలబడింది. ఓపెన్ నెట్‌వర్క్ ఫర్
+            డిజిటల్ కామర్స్ (ONDC) — పరిశ్రమల ప్రోత్సాహం మరియు అంతర్గత వాణిజ్య విభాగం (DPIIT),
+            భారత ప్రభుత్వం నిర్దేశించిన ప్రోటోకాల్-ఆధారిత జాతీయ డిజిటల్ వాణిజ్య మౌలిక సదుపాయం —
+            పనిచేస్తూ విస్తరిస్తోంది. AP వాణిజ్య వ్యవస్థ ద్వారా ప్రవహించే ప్రతి లావాదేవీ —
+            ఆహార డెలివరీ, కిరాణా, టికెట్ బుకింగ్, వ్యవసాయ ఉత్పత్తులు, MSME ఉత్పత్తులు,
+            GI ట్యాగ్ వారసత్వ వస్తువులు మరియు ఫ్రీలాన్స్ సేవలు — ప్రస్తుతం రాష్ట్ర ఖజానాకు
+            <strong>నేరుగా ఏమీ రావడం లేదు</strong>. ప్రైవేటు అగ్రిగేటర్లు మరియు జాతీయ వేదికలు AP
+            ఉత్పత్తిదారులు, విక్రేతలు మరియు వినియోగదారుల నుండి విలువను తీసుకుంటున్నారు,
+            రాష్ట్ర ప్రభుత్వం నిష్క్రియాత్మక పాత్ర వహిస్తోంది.
+          </p>
+          <p class="body-text">
+            జియాన్ టెక్నాలజీస్ LLP ఈ నిర్మాణాన్ని శాశ్వతంగా మార్చాలని ప్రతిపాదిస్తోంది. ఈ పత్రం
+            <strong>ఆంధ్రప్రదేశ్ కామర్స్ స్టాక్ (APCS)</strong> స్థాపనకు అధికారిక ప్రతిపాదనగా ఉంది —
+            ONDC పై రాష్ట్ర-యాజమాన్యపు డిజిటల్ వాణిజ్య మిడిల్‌వేర్ లేయర్ — జియాన్ టెక్నాలజీస్‌ను
+            ఆంధ్రప్రదేశ్ ప్రభుత్వానికి జవాబుదారీగా ఉండే నోడల్ ఏజెన్సీగా మరియు వేదిక డిజైన్,
+            అభివృద్ధి, అమలు మరియు నిరంతర కార్యకలాపాలకు బాధ్యత వహించే టెక్నాలజీ సర్వీస్
+            ప్రొవైడర్ (TSP) గా నియమించడంతో.
+          </p>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 2</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 2 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 3 — Para 3 + Core Prop
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <p class="body-text">
+            This is not a procurement of a vendor solution. This is the creation of <strong>sovereign state
+            commerce infrastructure</strong> — analogous to how NPCI owns and operates UPI on behalf of the
+            nation's financial system. Under this proposal, the Government of AP owns the platform, the
+            data, the revenue streams, and the policy authority. Zian Technologies builds it, operates it,
+            and remains accountable to the state for every performance metric and revenue outcome.
+          </p>
+          <div class="highlight-box">
+            <div class="hb-label">⚑ &nbsp;Core Proposition</div>
+            <p class="hb-text">
+              <strong>Government of Andhra Pradesh</strong> becomes the Network Participant (NP) on ONDC,
+              owning the AP commerce layer. <strong>Zian Technologies LLP</strong> acts as Nodal Agency + TSP
+              — accountable for execution, compliance, and revenue generation.
+              <strong>Six independent income streams</strong> are created, all government-owned, with zero
+              dependency on private platforms.<br><br>
+              <strong>Eight commerce verticals</strong> are unified under AP governance: Food Delivery,
+              Ticket Booking, My Services, Brand Andhra (GI Tags), My Products, Grocery, MSME Products,
+              and Agri Products. The CM's vision of <strong>One Entrepreneur Per One Family</strong> is fully
+              operationalized — every AP family receives a government-backed digital commerce launch pad
+              from Day 1.
+            </p>
+          </div>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 2 (continued)</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <p class="body-text">
+            ఇది వెండర్ సొల్యూషన్ సేకరణ కాదు. ఇది <strong>సార్వభౌమ రాష్ట్ర వాణిజ్య మౌలిక సదుపాయాల
+            సృష్టి</strong> — NPCI దేశం యొక్క ఆర్థిక వ్యవస్థ తరపున UPI ని ఎలా సొంతం చేసుకుని
+            నిర్వహిస్తుందో అలాంటిది. ఈ ప్రతిపాదన కింద, AP ప్రభుత్వం వేదిక, డేటా, ఆదాయ ప్రవాహాలు
+            మరియు విధాన అధికారాన్ని సొంతం చేసుకుంటుంది. జియాన్ టెక్నాలజీస్ దానిని నిర్మిస్తుంది,
+            నిర్వహిస్తుంది మరియు ప్రతి పనితీరు మెట్రిక్ మరియు ఆదాయ ఫలితానికి రాష్ట్రానికి
+            జవాబుదారీగా ఉంటుంది.
+          </p>
+          <div class="highlight-box">
+            <div class="hb-label">⚑ &nbsp;మూల ప్రతిపాదన</div>
+            <p class="hb-text">
+              <strong>ఆంధ్రప్రదేశ్ ప్రభుత్వం</strong> ONDC పై నెట్‌వర్క్ పాల్గొనేవారు (NP) అవుతుంది,
+              AP వాణిజ్య లేయర్‌ను సొంతం చేసుకుంటుంది. <strong>జియాన్ టెక్నాలజీస్ LLP</strong>
+              నోడల్ ఏజెన్సీ + TSP గా వ్యవహరిస్తుంది — అమలు, సమ్మతి మరియు ఆదాయ ఉత్పత్తికి
+              జవాబుదారీగా ఉంటుంది. <strong>ఆరు స్వతంత్ర ఆదాయ ప్రవాహాలు</strong> సృష్టించబడతాయి,
+              అన్నీ ప్రభుత్వ-యాజమాన్యపు, ప్రైవేటు వేదికలపై శూన్య ఆధారపడటంతో.<br><br>
+              <strong>ఎనిమిది వాణిజ్య విభాగాలు</strong> AP పాలన కింద ఏకీకృతం చేయబడతాయి: ఆహార డెలివరీ,
+              టికెట్ బుకింగ్, నా సేవలు, బ్రాండ్ ఆంధ్ర (GI ట్యాగ్లు), నా ఉత్పత్తులు, కిరాణా,
+              MSME ఉత్పత్తులు మరియు వ్యవసాయ ఉత్పత్తులు. సీఎం యొక్క
+              <strong>ప్రతి కుటుంబానికి ఒక పారిశ్రామికవేత్త</strong> దృష్టి పూర్తిగా ఆచరణలో
+              పెట్టబడుతుంది — ప్రతి AP కుటుంబానికి 1వ రోజు నుండే ప్రభుత్వ-మద్దతు గల
+              డిజిటల్ వాణిజ్య ప్రారంభ వేదిక అందుతుంది.
+            </p>
+          </div>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 2 (కొనసాగింపు)</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 3 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 4 — 2.1 ONDC + 2.2 Nagaland
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 2</span>
+          <h2 class="sec-title">Background &amp; <span class="accent">Context</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">2.1 The ONDC National Framework</h3>
+          <p class="body-text">
+            ONDC is an open-protocol digital commerce network initiated by DPIIT, Government of India,
+            and operationalized under the ONDC Foundation. Unlike closed e-commerce platforms such as
+            Amazon, Flipkart, Swiggy, or Zomato, ONDC is unbundled — any entity can become a Network
+            Participant as a buyer app, seller app, or logistics participant. The network is live across
+            multiple categories including food &amp; beverages, grocery, fashion, electronics, home decor,
+            mobility, financial services, and health. ONDC surpassed 14 lakh daily transactions by early
+            2024 and is growing exponentially.
+          </p>
+          <p class="body-text">
+            The critical architecture point: ONDC is a protocol, not a platform. Whoever operates the
+            buyer and seller application layer owns the consumer relationship, the data, and —
+            critically — the monetization opportunity.
+          </p>
+
+          <h3 class="sub-head">2.2 The Nagaland Ilandlo Precedent</h3>
+          <p class="body-text">
+            In 2023, the Government of Nagaland established Ilandlo as the state-level Network
+            Participant on ONDC — the first state government in India to assert ownership of its ONDC
+            commerce layer. Ilandlo functions as both the buyer and seller application for Nagaland,
+            on-boarding local producers and sellers onto the national ONDC network while retaining data
+            sovereignty and commission revenue for the state. This precedent directly validates the
+            governance model proposed in this document for Andhra Pradesh.
+          </p>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 3</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 2</span>
+          <h2 class="sec-title">నేపథ్యం &amp; <span class="accent">సందర్భం</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">2.1 ONDC జాతీయ ఫ్రేమ్‌వర్క్</h3>
+          <p class="body-text">
+            ONDC అనేది DPIIT, భారత ప్రభుత్వం ప్రారంభించిన మరియు ONDC ఫౌండేషన్ కింద నిర్వహించబడే
+            ఓపెన్-ప్రోటోకాల్ డిజిటల్ వాణిజ్య నెట్‌వర్క్. Amazon, Flipkart, Swiggy లేదా Zomato
+            వంటి మూసిన ఇ-కామర్స్ వేదికల వలె కాకుండా, ONDC అన్‌బండిల్ చేయబడింది — ఏ సంస్థ అయినా
+            కొనుగోలుదారు యాప్, విక్రేత యాప్ లేదా లాజిస్టిక్స్ పాల్గొనేవారిగా నెట్‌వర్క్
+            పాల్గొనేవారు అవుతుంది. నెట్‌వర్క్ ఆహారం &amp; పానీయాలు, కిరాణా, ఫ్యాషన్,
+            ఎలక్ట్రానిక్స్, హోమ్ డెకోర్, మొబిలిటీ, ఆర్థిక సేవలు మరియు ఆరోగ్యంతో సహా అనేక
+            వర్గాలలో నేరుగా పనిచేస్తోంది. ONDC 2024 ప్రారంభంలో రోజువారీ 14 లక్షల లావాదేవీలను
+            దాటింది మరియు విపరీతంగా పెరుగుతోంది.
+          </p>
+          <p class="body-text">
+            కీలకమైన నిర్మాణ అంశం: ONDC ఒక వేదిక కాదు, ఇది ఒక ప్రోటోకాల్. కొనుగోలుదారు మరియు
+            విక్రేత దరఖాస్తు లేయర్‌ను ఎవరు నిర్వహిస్తారో వారు వినియోగదారు సంబంధాన్ని, డేటాను
+            మరియు — ముఖ్యంగా — మోనెటైజేషన్ అవకాశాన్ని సొంతం చేసుకుంటారు.
+          </p>
+
+          <h3 class="sub-head">2.2 నాగాలాండ్ Ilandlo దృష్టాంతం</h3>
+          <p class="body-text">
+            2023లో, నాగాలాండ్ ప్రభుత్వం ONDC పై రాష్ట్ర-స్థాయి నెట్‌వర్క్ పాల్గొనేవారిగా
+            Ilandlo ని స్థాపించింది — తన ONDC వాణిజ్య లేయర్ యాజమాన్యాన్ని చాటుకున్న
+            భారతదేశంలో మొట్టమొదటి రాష్ట్ర ప్రభుత్వం. Ilandlo నాగాలాండ్‌కు కొనుగోలుదారు మరియు
+            విక్రేత దరఖాస్తు రెండూగా పనిచేస్తుంది, స్థానిక ఉత్పత్తిదారులను మరియు విక్రేతలను
+            జాతీయ ONDC నెట్‌వర్క్‌లో చేర్చుతూ రాష్ట్రానికి డేటా సార్వభౌమత్వం మరియు కమీషన్
+            ఆదాయాన్ని అందిస్తోంది. ఈ దృష్టాంతం ఈ పత్రంలో ఆంధ్రప్రదేశ్ కోసం ప్రతిపాదించిన
+            పాలన నమూనాను నేరుగా ధృవీకరిస్తుంది.
+          </p>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 3</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 4 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 5 — 2.3 Why AP
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 2 — Continued</span>
+          <h2 class="sec-title">Why Andhra Pradesh Is the <span class="accent">Natural Anchor State</span></h2>
+          <div class="sec-divider"></div>
+
+          <ul class="bullet-list">
+            <li>
+              <span class="arr">▸</span>
+              <span>Largest number of GI-tagged traditional products of any south Indian state — a ready premium commerce asset</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>Agricultural output among the highest in India — over 60% of the population engaged in the agri economy</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>MSME base of over 35 lakh registered units — national commerce access is a stated policy priority</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>Aspirational CM-level vision: One Entrepreneur Per One Family — requires government-owned digital infrastructure</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>First-mover advantage: No south Indian state has yet claimed the ONDC Network Participant position</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>Strong IT&amp;C infrastructure: AP Fibernet, digital literacy programmes, and district digital infrastructure in place</span>
+            </li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 3</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 2 — కొనసాగింపు</span>
+          <h2 class="sec-title">ఆంధ్రప్రదేశ్ సహజ <span class="accent">యాంకర్ రాష్ట్రం</span> ఎందుకు</h2>
+          <div class="sec-divider"></div>
+
+          <ul class="bullet-list">
+            <li>
+              <span class="arr">▸</span>
+              <span>ఏ దక్షిణ భారత రాష్ట్రం కంటే ఎక్కువ GI ట్యాగ్ సాంప్రదాయ ఉత్పత్తులు — సిద్ధమైన ప్రీమియం వాణిజ్య ఆస్తి</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>భారతదేశంలో అత్యధిక వ్యవసాయ ఉత్పత్తి — 60% కంటే ఎక్కువ జనాభా వ్యవసాయ ఆర్థిక వ్యవస్థలో నిమగ్నమై ఉంది</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>35 లక్షలకు పైగా నమోదిత యూనిట్లతో MSME స్థావరం — జాతీయ వాణిజ్య ప్రాప్తి అనేది పేర్కొన్న విధాన ప్రాధాన్యత</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>ఆకాంక్షాపూర్వక సీఎం-స్థాయి దృష్టి: ప్రతి కుటుంబానికి ఒక పారిశ్రామికవేత్త — ప్రభుత్వ-యాజమాన్యపు డిజిటల్ మౌలిక సదుపాయాలు అవసరం</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>ఫస్ట్-మూవర్ ప్రయోజనం: ఏ దక్షిణ భారత రాష్ట్రం ఇంకా ONDC నెట్‌వర్క్ పాల్గొనేవారి స్థానాన్ని సాధించలేదు</span>
+            </li>
+            <li>
+              <span class="arr">▸</span>
+              <span>బలమైన IT&amp;C మౌలిక సదుపాయాలు: AP ఫైబర్‌నెట్, డిజిటల్ అక్షరాస్యత కార్యక్రమాలు మరియు జిల్లా డిజిటల్ మౌలిక సదుపాయాలు అందుబాటులో ఉన్నాయి</span>
+            </li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 3</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 5 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 6 — 2.4 The Revenue Gap
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 2.4 — Background &amp; Context</span>
+          <h2 class="sec-title">The Revenue Gap — <span class="accent">What AP Loses Today</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Every day, Andhra Pradesh commerce flows through private platforms with the following economic consequences for the state:</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Commerce Vertical</th><th>Current Value Extraction</th><th>State Impact</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Food Delivery</td>
+                <td>Swiggy / Zomato collect 18–25% commission on every order</td>
+                <td>Commission exits AP; state earns zero</td>
+              </tr>
+              <tr>
+                <td>Grocery</td>
+                <td>Blinkit / Zepto / Big Basket retain full margin on AP transactions</td>
+                <td>Local kiranas lose; no state revenue</td>
+              </tr>
+              <tr>
+                <td>Ticket Booking</td>
+                <td>BookMyShow / Paytm retain convenience fee on every ticket</td>
+                <td>AP cultural events monetized by out-of-state companies</td>
+              </tr>
+              <tr>
+                <td>GI Products</td>
+                <td>Sold on Amazon/Flipkart without authentication layer</td>
+                <td>Counterfeits proliferate; artisans lose margin</td>
+              </tr>
+              <tr>
+                <td>MSME Products</td>
+                <td>GeM partial; Flipkart Commerce takes 30–35%</td>
+                <td>MSME margin erosion; no state data or oversight</td>
+              </tr>
+              <tr>
+                <td>Agri Products</td>
+                <td>Mandi system + ITC e-Choupal extract intermediary value</td>
+                <td>Farmer net realization consistently below MSP</td>
+              </tr>
+              <tr>
+                <td>Freelance Services</td>
+                <td>UrbanClap / Urban Company take 25–30% of every booking</td>
+                <td>AP service workers subsidize Delhi-based companies</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 4</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 2.4 — నేపథ్యం &amp; సందర్భం</span>
+          <h2 class="sec-title">ఆదాయ లోటు — <span class="accent">AP ఈరోజు కోల్పోతున్నది</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">ప్రతి రోజూ, ఆంధ్రప్రదేశ్ వాణిజ్యం ప్రైవేట్ వేదికల ద్వారా ప్రవహిస్తుంది — రాష్ట్రానికి ఈ క్రింది ఆర్థిక పరిణామాలతో:</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>వాణిజ్య విభాగం</th><th>ప్రస్తుత విలువ వెలికితీత</th><th>రాష్ట్ర ప్రభావం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ఆహారం డెలివరీ</td>
+                <td>Swiggy / Zomato ప్రతి ఆర్డర్‌పై 18–25% కమీషన్ వసూలు చేస్తాయి</td>
+                <td>కమీషన్ AP వదిలి వెళ్తుంది; రాష్ట్రం సున్నా సంపాదిస్తుంది</td>
+              </tr>
+              <tr>
+                <td>కిరాణా</td>
+                <td>Blinkit / Zepto / Big Basket AP లావాదేవీలపై పూర్తి మార్జిన్ నిలుపుకుంటాయి</td>
+                <td>స్థానిక కిరాణా దుకాణాలు నష్టపోతున్నాయి; రాష్ట్రానికి ఆదాయం లేదు</td>
+              </tr>
+              <tr>
+                <td>టిక్కెట్ బుకింగ్</td>
+                <td>BookMyShow / Paytm ప్రతి టిక్కెట్‌పై కన్వీనియన్స్ ఫీ నిలుపుకుంటాయి</td>
+                <td>AP సాంస్కృతిక కార్యక్రమాలు రాష్ట్రేతర కంపెనీలచే మోనిటైజ్ చేయబడుతున్నాయి</td>
+              </tr>
+              <tr>
+                <td>GI ఉత్పత్తులు</td>
+                <td>ప్రామాణీకరణ లేయర్ లేకుండా Amazon/Flipkart లో విక్రయించబడుతున్నాయి</td>
+                <td>నకిలీలు విస్తరిస్తున్నాయి; చేతివృత్తిదారులు మార్జిన్ కోల్పోతున్నారు</td>
+              </tr>
+              <tr>
+                <td>MSME ఉత్పత్తులు</td>
+                <td>GeM పాక్షికం; Flipkart Commerce 30–35% తీసుకుంటుంది</td>
+                <td>MSME మార్జిన్ కోత; రాష్ట్రానికి డేటా లేదా పర్యవేక్షణ లేదు</td>
+              </tr>
+              <tr>
+                <td>వ్యవసాయ ఉత్పత్తులు</td>
+                <td>మండి వ్యవస్థ + ITC e-Choupal మధ్యవర్తి విలువను వెలికితీస్తాయి</td>
+                <td>రైతు నికర సాక్షాత్కారం నిరంతరం MSP కంటే తక్కువగా ఉంటుంది</td>
+              </tr>
+              <tr>
+                <td>ఫ్రీలాన్స్ సేవలు</td>
+                <td>UrbanClap / Urban Company ప్రతి బుకింగ్‌పై 25–30% తీసుకుంటాయి</td>
+                <td>AP సేవా కార్మికులు ఢిల్లీ-ఆధారిత కంపెనీలకు సబ్సిడీ ఇస్తున్నారు</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 4</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 6 — Revenue Gap -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 7 — 3.1 Intro + Layer 1
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3</span>
+          <h2 class="sec-title">The AP Commerce Stack — <span class="accent">Architecture &amp; Scope</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.1 What is APCS</h3>
+          <p class="body-text">
+            The Andhra Pradesh Commerce Stack (APCS) is a state-owned digital commerce middleware
+            platform, registered as a Network Participant on ONDC that sits between ONDC's national
+            protocol layer and every buyer and seller in Andhra Pradesh. APCS is the technical and
+            governance entity, through which the Government of AP asserts control, earns revenue,
+            enforces compliance, and delivers the CM's entrepreneurship vision.
+          </p>
+          <p class="body-text">APCS operates across three integrated functional layers:</p>
+
+          <div class="layer-card">
+            <div class="layer-header">Layer 1 — Commerce Verticals</div>
+            <div class="layer-body">
+              <div class="layer-desc">
+                Eight commerce categories accessible to buyers and sellers: Food, Grocery, Tickets,
+                GI Products, My Products, Services, MSME, and Agri. Each vertical is a structured
+                module with dedicated seller on-boarding, taxonomy, compliance, and monetization rules.
+              </div>
+              <div class="layer-owner">
+                <div class="layer-owner-label">Ownership / Operation</div>
+                Buyer-facing apps, seller dashboards, category-specific compliance
+              </div>
+            </div>
+          </div>
+
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 5</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3</span>
+          <h2 class="sec-title">AP కామర్స్ స్టాక్ — <span class="accent">నిర్మాణం &amp; పరిధి</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.1 APCS అంటే ఏమిటి</h3>
+          <p class="body-text">
+            ఆంధ్రప్రదేశ్ కామర్స్ స్టాక్ (APCS) అనేది రాష్ట్ర-యాజమాన్యపు డిజిటల్ వాణిజ్య
+            మిడిల్‌వేర్ వేదిక, ONDC పై నెట్‌వర్క్ పాల్గొనేవారిగా నమోదు చేయబడింది, ఇది ONDC యొక్క
+            జాతీయ ప్రోటోకాల్ లేయర్ మరియు ఆంధ్రప్రదేశ్‌లోని ప్రతి కొనుగోలుదారు మరియు విక్రేత
+            మధ్య ఉంటుంది. APCS అనేది సాంకేతిక మరియు పాలన సంస్థ, దీని ద్వారా AP ప్రభుత్వం
+            నియంత్రణ చాటుకుంటుంది, ఆదాయం సంపాదిస్తుంది, సమ్మతిని అమలు చేస్తుంది మరియు
+            సీఎం యొక్క పారిశ్రామికవేత్త దృష్టిని అందిస్తుంది.
+          </p>
+          <p class="body-text">APCS మూడు సమీకృత క్రియాత్మక లేయర్లలో పనిచేస్తుంది:</p>
+
+          <div class="layer-card">
+            <div class="layer-header">లేయర్ 1 — వాణిజ్య విభాగాలు</div>
+            <div class="layer-body">
+              <div class="layer-desc">
+                కొనుగోలుదారులకు మరియు విక్రేతలకు అందుబాటులో ఉన్న ఎనిమిది వాణిజ్య వర్గాలు:
+                ఆహారం, కిరాణా, టికెట్లు, GI ఉత్పత్తులు, నా ఉత్పత్తులు, సేవలు, MSME మరియు
+                వ్యవసాయం. ప్రతి విభాగం అంకితమైన విక్రేత నమోదు, వర్గీకరణ, సమ్మతి మరియు
+                మోనెటైజేషన్ నియమాలతో నిర్మించిన మాడ్యూల్.
+              </div>
+              <div class="layer-owner">
+                <div class="layer-owner-label">యాజమాన్యం / నిర్వహణ</div>
+                కొనుగోలుదారు-ముఖ యాప్లు, విక్రేత డాష్‌బోర్డులు, వర్గ-నిర్దిష్ట సమ్మతి
+              </div>
+            </div>
+          </div>
+
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 5</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 6 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 7 — Layer 2 + Layer 3
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3 — Continued</span>
+          <h2 class="sec-title">Architecture Layers <span class="accent">2 &amp; 3</span></h2>
+          <div class="sec-divider"></div>
+
+          <div class="layer-card">
+            <div class="layer-header">Layer 2 — State Middleware (APCS Core)</div>
+            <div class="layer-body">
+              <div class="layer-desc">
+                The government-owned platform connecting all verticals to ONDC. This layer handles
+                Aadhaar-linked identity, payment settlement, GST compliance, advertising marketplace,
+                analytics, Brand Andhra GI registry, and all revenue collection on behalf of GoAP.
+              </div>
+              <div class="layer-owner">
+                <div class="layer-owner-label">Ownership / Operation</div>
+                Operated by Zian as TSP; owned by Government of AP
+              </div>
+            </div>
+          </div>
+
+          <div class="layer-card">
+            <div class="layer-header">Layer 3 — ONDC National Protocol</div>
+            <div class="layer-body">
+              <div class="layer-desc">
+                The open protocol layer operated by ONDC Foundation under DPIIT. APCS connects to
+                this layer as a certified Network Participant, giving every AP seller instant national
+                market access and every buyer access to ONDC's full product universe.
+              </div>
+              <div class="layer-owner">
+                <div class="layer-owner-label">Ownership / Operation</div>
+                Central Government infrastructure; AP participates as Network Participant
+              </div>
+            </div>
+          </div>
+
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 5</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3 — కొనసాగింపు</span>
+          <h2 class="sec-title">నిర్మాణ లేయర్లు <span class="accent">2 &amp; 3</span></h2>
+          <div class="sec-divider"></div>
+
+          <div class="layer-card">
+            <div class="layer-header">లేయర్ 2 — రాష్ట్ర మిడిల్‌వేర్ (APCS కోర్)</div>
+            <div class="layer-body">
+              <div class="layer-desc">
+                అన్ని విభాగాలను ONDC తో అనుసంధానించే ప్రభుత్వ-యాజమాన్యపు వేదిక. ఈ లేయర్
+                ఆధార్-లింక్డ్ గుర్తింపు, చెల్లింపు సెటిల్‌మెంట్, GST సమ్మతి, ప్రకటనల
+                మార్కెట్‌ప్లేస్, విశ్లేషణలు, బ్రాండ్ ఆంధ్ర GI రిజిస్ట్రీ మరియు GoAP తరపున
+                అన్ని ఆదాయ సేకరణలను నిర్వహిస్తుంది.
+              </div>
+              <div class="layer-owner">
+                <div class="layer-owner-label">యాజమాన్యం / నిర్వహణ</div>
+                జియాన్ TSP గా నిర్వహిస్తుంది; AP ప్రభుత్వం యాజమాన్యం
+              </div>
+            </div>
+          </div>
+
+          <div class="layer-card">
+            <div class="layer-header">లేయర్ 3 — ONDC జాతీయ ప్రోటోకాల్</div>
+            <div class="layer-body">
+              <div class="layer-desc">
+                DPIIT కింద ONDC ఫౌండేషన్ నిర్వహించే ఓపెన్ ప్రోటోకాల్ లేయర్. APCS ధృవీకృత
+                నెట్‌వర్క్ పాల్గొనేవారిగా ఈ లేయర్‌కు కనెక్ట్ అవుతుంది, ప్రతి AP విక్రేతకు
+                తక్షణ జాతీయ మార్కెట్ ప్రాప్తి మరియు ప్రతి కొనుగోలుదారుకు ONDC యొక్క పూర్తి
+                ఉత్పత్తి విశ్వానికి ప్రాప్తిని అందిస్తుంది.
+              </div>
+              <div class="layer-owner">
+                <div class="layer-owner-label">యాజమాన్యం / నిర్వహణ</div>
+                కేంద్ర ప్రభుత్వ మౌలిక సదుపాయాలు; AP నెట్‌వర్క్ పాల్గొనేవారిగా పాల్గొంటుంది
+              </div>
+            </div>
+          </div>
+
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 5</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 7 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 8 — 3.2 Intro + 3.2.1 Food Delivery
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3.2</span>
+          <h2 class="sec-title">Eight Commerce <span class="accent">Verticals</span> — Scope Definition</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">
+            Each vertical under APCS is a defined government-regulated commerce domain with distinct
+            policy, compliance, and revenue architecture:
+          </p>
+
+          <h3 class="sub-head">3.2.1 Food Delivery</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Restaurants, cloud kitchens, tiffin services, and home-based food businesses across all AP cities and towns</span></li>
+            <li><span class="arr">▸</span><span>APCS operates as buyer and seller application — a government-governed alternative to Swiggy and Zomato</span></li>
+            <li><span class="arr">▸</span><span>Commission structure set by GoAP policy; a portion is retained as state revenue, and the remainder paid to the restaurant</span></li>
+            <li><span class="arr">▸</span><span>FSSAI compliance enforced at registration — no unregistered food sellers permitted on the platform</span></li>
+            <li><span class="arr">▸</span><span>Promotes home-based women entrepreneurs, SHG kitchens, and micro food businesses as One-Family-One-Entrepreneur targets</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 6</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3.2</span>
+          <h2 class="sec-title">ఎనిమిది వాణిజ్య <span class="accent">విభాగాలు</span> — పరిధి నిర్వచనం</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">
+            APCS కింద ప్రతి విభాగం వేర్వేరు విధానం, సమ్మతి మరియు ఆదాయ నిర్మాణంతో
+            నిర్వచించబడిన ప్రభుత్వ-నియంత్రిత వాణిజ్య డొమైన్:
+          </p>
+
+          <h3 class="sub-head">3.2.1 ఆహార డెలివరీ</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>AP నగరాలు మరియు పట్టణాలలో రెస్టారెంట్లు, క్లౌడ్ కిచెన్లు, టిఫిన్ సేవలు మరియు గృహ-ఆధారిత ఆహార వ్యాపారాలు</span></li>
+            <li><span class="arr">▸</span><span>APCS కొనుగోలుదారు మరియు విక్రేత దరఖాస్తుగా పనిచేస్తుంది — Swiggy మరియు Zomato కు ప్రభుత్వ-పాలన ప్రత్యామ్నాయం</span></li>
+            <li><span class="arr">▸</span><span>కమీషన్ నిర్మాణం GoAP విధానం ద్వారా నిర్ణయించబడుతుంది; ఒక భాగం రాష్ట్ర ఆదాయంగా నిలుపబడుతుంది, మిగతాది రెస్టారెంట్‌కు చెల్లించబడుతుంది</span></li>
+            <li><span class="arr">▸</span><span>నమోదు సమయంలో FSSAI సమ్మతి అమలు చేయబడుతుంది — నమోదు చేయని ఆహార విక్రేతలు వేదికపై అనుమతించబడరు</span></li>
+            <li><span class="arr">▸</span><span>గృహ-ఆధారిత మహిళా పారిశ్రామికవేత్తలు, SHG వంటగదులు మరియు మైక్రో ఆహార వ్యాపారాలను ఒక-కుటుంబం-ఒక-పారిశ్రామికవేత్త లక్ష్యాలుగా ప్రోత్సహిస్తుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 6</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 8 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 9 — 3.2.2 + 3.2.3
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3.2 — Continued</span>
+          <h2 class="sec-title">Ticket Booking &amp; <span class="accent">My Services</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.2 Ticket Booking</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Single AP ticketing layer: cinema, cultural events, sports, tourism, pilgrimage, and government facility booking</span></li>
+            <li><span class="arr">▸</span><span>Replaces dependency on BookMyShow and Paytm Insider for all AP-based events</span></li>
+            <li><span class="arr">▸</span><span>Convenience fee revenue collected by APCS flows directly to the state; promoters pay transparent listing fees</span></li>
+            <li><span class="arr">▸</span><span>Integration with AP Tourism and Endowments Boards for pilgrimage and heritage site ticketing</span></li>
+            <li><span class="arr">▸</span><span>Live event analytics provide the government real-time data on the cultural and entertainment economy</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.3 My Services — Individual Service Providers</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Platform for individual service providers: electricians, plumbers, carpenters, tutors, drivers, beauticians, tailors, healthcare workers, accountants, and legal aid professionals</span></li>
+            <li><span class="arr">▸</span><span>Direct enabler of CM's One Entrepreneur Per One Family — every service provider becomes a micro-entrepreneur</span></li>
+            <li><span class="arr">▸</span><span>Aadhaar-verified, district-wise listed, customer-rated, and GST-compliant freelance economy</span></li>
+            <li><span class="arr">▸</span><span>Skill certification integration with AP State Skill Development Corporation (APSSDC)</span></li>
+            <li><span class="arr">▸</span><span>Consumer protection: escrow payment, service guarantee, and dispute resolution managed by APCS</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 6</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3.2 — కొనసాగింపు</span>
+          <h2 class="sec-title">టికెట్ బుకింగ్ &amp; <span class="accent">నా సేవలు</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.2 టికెట్ బుకింగ్</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>ఒకే AP టికెటింగ్ లేయర్: సినిమా, సాంస్కృతిక కార్యక్రమాలు, క్రీడలు, పర్యాటకం, తీర్థయాత్ర మరియు ప్రభుత్వ సౌకర్య బుకింగ్</span></li>
+            <li><span class="arr">▸</span><span>AP-ఆధారిత అన్ని ఈవెంట్లకు BookMyShow మరియు Paytm Insider పై ఆధారపడటం తొలగిస్తుంది</span></li>
+            <li><span class="arr">▸</span><span>APCS వసూలు చేసే సౌకర్య రుసుము ఆదాయం నేరుగా రాష్ట్రానికి వెళ్తుంది; ప్రమోటర్లు పారదర్శక లిస్టింగ్ రుసుములు చెల్లిస్తారు</span></li>
+            <li><span class="arr">▸</span><span>తీర్థయాత్ర మరియు వారసత్వ స్థల టికెటింగ్ కోసం AP పర్యాటకం మరియు ఎండోమెంట్స్ బోర్డులతో ఏకీకరణ</span></li>
+            <li><span class="arr">▸</span><span>లైవ్ ఈవెంట్ విశ్లేషణలు సాంస్కృతిక మరియు వినోద ఆర్థిక వ్యవస్థపై ప్రభుత్వానికి నిజ-సమయ డేటా అందిస్తాయి</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.3 నా సేవలు — వ్యక్తిగత సేవా ప్రదాతలు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>వ్యక్తిగత సేవా ప్రదాతల వేదిక: ఎలక్ట్రీషియన్లు, ప్లంబర్లు, వడ్రంగులు, ట్యూటర్లు, డ్రైవర్లు, బ్యూటీషియన్లు, దర్జీలు, ఆరోగ్య కార్యకర్తలు, అకౌంటెంట్లు మరియు న్యాయ సహాయ నిపుణులు</span></li>
+            <li><span class="arr">▸</span><span>సీఎం యొక్క ప్రతి కుటుంబానికి ఒక పారిశ్రామికవేత్త యొక్క ప్రత్యక్ష అమలు సాధనం — ప్రతి సేవా ప్రదాత మైక్రో-పారిశ్రామికవేత్త అవుతాడు</span></li>
+            <li><span class="arr">▸</span><span>ఆధార్-ధృవీకరించబడిన, జిల్లా-వారీగా జాబితా చేయబడిన, వినియోగదారు-రేటింగ్ పొందిన మరియు GST-సమ్మత ఫ్రీలాన్స్ ఆర్థిక వ్యవస్థ</span></li>
+            <li><span class="arr">▸</span><span>AP రాష్ట్ర నైపుణ్య అభివృద్ధి సంస్థ (APSSDC) తో నైపుణ్య ధృవీకరణ ఏకీకరణ</span></li>
+            <li><span class="arr">▸</span><span>వినియోగదారు రక్షణ: ఎస్క్రో చెల్లింపు, సేవా హామీ మరియు APCS నిర్వహించే వివాద పరిష్కారం</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 6</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 9 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 10 — 3.2.4 + 3.2.5
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3.2 — Continued</span>
+          <h2 class="sec-title">Brand Andhra &amp; <span class="accent">My Products</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.4 Brand Andhra — GI Tag Products</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Government-authenticated digital storefront exclusively for Andhra Pradesh GI-tagged products</span></li>
+            <li><span class="arr">▸</span><span>Covered products: Kondapalli Toys, Kalamkari textiles, Etikoppaka lacquerware, Bandar laddu, Tirupati laddu, Guntur Sannam chilli, Machilipatnam Kalamkari, Nellore cloth, and all registered AP GIs</span></li>
+            <li><span class="arr">▸</span><span>Brand Andhra certification seal issued by state authority, displayed on every authentic listing</span></li>
+            <li><span class="arr">▸</span><span>Counterfeit prevention: only certified artisan collectives and KVIC-registered units may list under Brand Andhra</span></li>
+            <li><span class="arr">▸</span><span>Export gateway: Brand Andhra becomes AP's international commerce identity — the state can negotiate bilateral trade arrangements using Brand Andhra as the vehicle</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.5 My Brand / My Products — Individual Product Sellers</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>D2C (direct-to-consumer) marketplace for individual AP manufacturers, home-based product makers, artisans, and micro-brands</span></li>
+            <li><span class="arr">▸</span><span>Product registration, quality certification prompts, and GST invoice auto-generation built into seller onboarding</span></li>
+            <li><span class="arr">▸</span><span>State brand registry for intellectual property protection — prevents name squatting on AP-origin product brands</span></li>
+            <li><span class="arr">▸</span><span>National reach via ONDC: any AP seller's product is visible to buyers across all ONDC buyer apps — Paytm, PhonePe, and beyond</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 7</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3.2 — కొనసాగింపు</span>
+          <h2 class="sec-title">బ్రాండ్ ఆంధ్ర &amp; <span class="accent">నా ఉత్పత్తులు</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.4 బ్రాండ్ ఆంధ్ర — GI ట్యాగ్ ఉత్పత్తులు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>ఆంధ్రప్రదేశ్ GI ట్యాగ్ ఉత్పత్తుల కోసం ప్రత్యేకంగా ప్రభుత్వ-ధృవీకరించిన డిజిటల్ స్టోర్‌ఫ్రంట్</span></li>
+            <li><span class="arr">▸</span><span>కవర్ చేయబడిన ఉత్పత్తులు: కొండపల్లి బొమ్మలు, కలంకారీ వస్త్రాలు, ఎటికొప్పాక లక్కపని, బందరు లడ్డూ, తిరుపతి లడ్డూ, గుంటూరు సన్నం మిర్చి, మచిలీపట్నం కలంకారీ, నెల్లూరు వస్త్రం మరియు అన్ని నమోదిత AP GIలు</span></li>
+            <li><span class="arr">▸</span><span>రాష్ట్ర అధికారం ద్వారా జారీ చేయబడిన బ్రాండ్ ఆంధ్ర ధృవీకరణ ముద్ర, ప్రతి అసలైన లిస్టింగ్‌పై ప్రదర్శించబడుతుంది</span></li>
+            <li><span class="arr">▸</span><span>నకిలీ నివారణ: ధృవీకరించిన చేతివృత్తుల సమూహాలు మరియు KVIC-నమోదిత యూనిట్లు మాత్రమే బ్రాండ్ ఆంధ్ర కింద జాబితా చేయవచ్చు</span></li>
+            <li><span class="arr">▸</span><span>ఎగుమతి గేట్‌వే: బ్రాండ్ ఆంధ్ర AP యొక్క అంతర్జాతీయ వాణిజ్య గుర్తింపుగా మారుతుంది — రాష్ట్రం బ్రాండ్ ఆంధ్రను వాహనంగా ఉపయోగించి ద్వైపాక్షిక వాణిజ్య ఏర్పాట్లు చర్చించగలదు</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.5 నా బ్రాండ్ / నా ఉత్పత్తులు — వ్యక్తిగత ఉత్పత్తి విక్రేతలు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>వ్యక్తిగత AP తయారీదారులు, గృహ-ఆధారిత ఉత్పత్తి తయారీదారులు, చేతివృత్తుల వారు మరియు మైక్రో-బ్రాండ్‌ల కోసం D2C (డైరెక్ట్-టు-కన్స్యూమర్) మార్కెట్‌ప్లేస్</span></li>
+            <li><span class="arr">▸</span><span>ఉత్పత్తి నమోదు, నాణ్యత ధృవీకరణ సూచనలు మరియు GST ఇన్‌వాయిస్ ఆటో-జనరేషన్ విక్రేత నమోదులో నిర్మించబడ్డాయి</span></li>
+            <li><span class="arr">▸</span><span>IP రక్షణ కోసం రాష్ట్ర బ్రాండ్ రిజిస్ట్రీ — AP-మూల ఉత్పత్తి బ్రాండ్‌లపై పేరు స్క్వాటింగ్ నిరోధిస్తుంది</span></li>
+            <li><span class="arr">▸</span><span>ONDC ద్వారా జాతీయ చేరువు: ఏ AP విక్రేత ఉత్పత్తి అయినా అన్ని ONDC కొనుగోలుదారు యాప్‌లలో — Paytm, PhonePe మరియు మరిన్నింటిలో కొనుగోలుదారులకు కనిపిస్తుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 7</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 10 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 11 — 3.2.6 + 3.2.7 (up to quality grading)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3.2 — Continued</span>
+          <h2 class="sec-title">Grocery &amp; <span class="accent">MSME Products</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.6 Grocery Delivery</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Hyperlocal grocery delivery connecting kirana stores, mandis, and supermarkets to consumers within their catchment area</span></li>
+            <li><span class="arr">▸</span><span>Competes with Blinkit, Zepto, and Big Basket on AP soil — with commission revenue retained within the state ecosystem</span></li>
+            <li><span class="arr">▸</span><span>Rural inclusion: kirana stores in Tier-3 and Tier-4 towns are digitally onboarded via Telugu-language interfaces</span></li>
+            <li><span class="arr">▸</span><span>Integration with AP Fibernet for last-mile digital connectivity in underserved areas</span></li>
+            <li><span class="arr">▸</span><span>Supports AP government food security monitoring — real-time basket price data available across all districts</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.7 MSME Products Display &amp; Commerce</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>AP's 35 lakh+ MSME units gain national ONDC network visibility — discovery, enquiry, and purchase flow in a single platform</span></li>
+            <li><span class="arr">▸</span><span>B2B procurement discovery: buyers across India can source directly from AP MSMEs through APCS</span></li>
+            <li><span class="arr">▸</span><span>Quality grading integration: FSSAI, BIS, and APEDA certification status displayed on every MSME listing</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 7</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3.2 — కొనసాగింపు</span>
+          <h2 class="sec-title">కిరాణా &amp; <span class="accent">MSME ఉత్పత్తులు</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.6 కిరాణా డెలివరీ</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>కిరాణా దుకాణాలు, మండీలు మరియు సూపర్‌మార్కెట్‌లను వారి క్యాచ్‌మెంట్ ప్రాంతంలోని వినియోగదారులకు అనుసంధానించే హైపర్‌లోకల్ కిరాణా డెలివరీ</span></li>
+            <li><span class="arr">▸</span><span>AP నేలపై Blinkit, Zepto మరియు Big Basket తో పోటీ చేస్తుంది — రాష్ట్ర వ్యవస్థలో కమీషన్ ఆదాయం నిలుపబడుతుంది</span></li>
+            <li><span class="arr">▸</span><span>గ్రామీణ చేరువు: Tier-3 మరియు Tier-4 పట్టణాలలో కిరాణా దుకాణాలు తెలుగు-భాషా ఇంటర్‌ఫేస్‌ల ద్వారా డిజిటల్‌గా నమోదు చేయబడతాయి</span></li>
+            <li><span class="arr">▸</span><span>అందుబాటులో లేని ప్రాంతాలలో చివరి-మైలు డిజిటల్ కనెక్టివిటీ కోసం AP ఫైబర్‌నెట్‌తో ఏకీకరణ</span></li>
+            <li><span class="arr">▸</span><span>AP ప్రభుత్వ ఆహార భద్రతా పర్యవేక్షణకు మద్దతు — అన్ని జిల్లాలలో నిజ-సమయ బాస్కెట్ ధర డేటా అందుబాటులో ఉంటుంది</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.7 MSME ఉత్పత్తుల ప్రదర్శన &amp; వాణిజ్యం</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>AP యొక్క 35 లక్షలకు పైగా MSME యూనిట్లు జాతీయ ONDC నెట్‌వర్క్ దృశ్యమానత పొందుతాయి — ఒకే వేదికలో డిస్కవరీ, విచారణ మరియు కొనుగోలు ప్రవాహం</span></li>
+            <li><span class="arr">▸</span><span>B2B సేకరణ డిస్కవరీ: భారతదేశంలోని కొనుగోలుదారులు APCS ద్వారా నేరుగా AP MSMEల నుండి సోర్స్ చేయవచ్చు</span></li>
+            <li><span class="arr">▸</span><span>నాణ్యత గ్రేడింగ్ ఏకీకరణ: ప్రతి MSME లిస్టింగ్‌పై FSSAI, BIS మరియు APEDA ధృవీకరణ స్థితి ప్రదర్శించబడుతుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 7</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 11 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 12 — 3.2.7 remaining + 3.2.8
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 3.2 — Continued</span>
+          <h2 class="sec-title">MSME Products &amp; <span class="accent">Agri Products</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.7 MSME Products — Continued</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Government procurement overlay: AP departments can procure from MSMEs listed on APCS at fully transparent prices</span></li>
+            <li><span class="arr">▸</span><span>MSME credit bridge: APCS transaction ledger forms a verified income history for formal credit access</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.8 Agri Products — Farm to Fork</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Direct farmer-to-buyer commerce: eliminates mandi intermediaries for high-margin crops and processed agri products</span></li>
+            <li><span class="arr">▸</span><span>Integration with AP's existing agri infrastructure: Rythu Bharosa Kendra (RBK) network, eNAM, and AP Agros</span></li>
+            <li><span class="arr">▸</span><span>Contract farming discovery: agri processors and exporters can list procurement contracts; farmers accept digitally</span></li>
+            <li><span class="arr">▸</span><span>Price transparency: real-time benchmarking across APCS vs. mandi vs. MSP — farmer makes fully informed sell decisions</span></li>
+            <li><span class="arr">▸</span><span>AP Agri Export Gateway: Brand Andhra agri GI products (Guntur chilli, Banganapalli mango, Kurnool groundnut) transact internationally through APCS export module</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 8</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 3.2 — కొనసాగింపు</span>
+          <h2 class="sec-title">MSME ఉత్పత్తులు &amp; <span class="accent">వ్యవసాయ ఉత్పత్తులు</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">3.2.7 MSME ఉత్పత్తులు — కొనసాగింపు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>ప్రభుత్వ సేకరణ పొర: AP విభాగాలు APCS లో జాబితా చేయబడిన MSMEల నుండి పూర్తి పారదర్శక ధరలకు సేకరించగలవు</span></li>
+            <li><span class="arr">▸</span><span>MSME క్రెడిట్ వారధి: APCS లావాదేవీల లెడ్జర్ అధికారిక క్రెడిట్ ప్రాప్తి కోసం ధృవీకరించిన ఆదాయ చరిత్రగా ఏర్పడుతుంది</span></li>
+          </ul>
+
+          <h3 class="sub-head">3.2.8 వ్యవసాయ ఉత్పత్తులు — పొలం నుండి టేబుల్ వరకు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>నేరుగా రైతు-నుండి-కొనుగోలుదారు వాణిజ్యం: అధిక-మార్జిన్ పంటలు మరియు శుద్ధి చేయబడిన వ్యవసాయ ఉత్పత్తుల కోసం మండీ మధ్యవర్తులను తొలగిస్తుంది</span></li>
+            <li><span class="arr">▸</span><span>AP యొక్క ప్రస్తుత వ్యవసాయ మౌలిక సదుపాయాలతో ఏకీకరణ: రైతు భరోసా కేంద్రం (RBK) నెట్‌వర్క్, eNAM మరియు AP అగ్రోస్</span></li>
+            <li><span class="arr">▸</span><span>కాంట్రాక్ట్ వ్యవసాయ డిస్కవరీ: వ్యవసాయ ప్రాసెసర్లు మరియు ఎగుమతిదారులు సేకరణ కాంట్రాక్టులు జాబితా చేయవచ్చు; రైతులు డిజిటల్‌గా అంగీకరిస్తారు</span></li>
+            <li><span class="arr">▸</span><span>ధర పారదర్శకత: APCS vs. మండీ vs. MSP అంతటా నిజ-సమయ బెంచ్‌మార్కింగ్ — రైతు పూర్తి సమాచారంతో అమ్మకం నిర్ణయాలు తీసుకుంటాడు</span></li>
+            <li><span class="arr">▸</span><span>AP వ్యవసాయ ఎగుమతి గేట్‌వే: బ్రాండ్ ఆంధ్ర వ్యవసాయ GI ఉత్పత్తులు (గుంటూరు మిర్చి, బంగినపల్లి మామిడి, కర్నూలు వేరుశెనగ) APCS ఎగుమతి మాడ్యూల్ ద్వారా అంతర్జాతీయంగా లావాదేవీలు చేస్తాయి</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 8</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 12 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 13 — Section 4 intro (2 paras + dual mandate box)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4</span>
+          <h2 class="sec-title">Zian Technologies LLP — <span class="accent">Dual Role</span>: Nodal Agency &amp; TSP</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">
+            Zian Technologies LLP is proposing in a unique dual mandate. This is a deliberate and
+            critical design choice — separating technical execution from governance accountability
+            creates systemic risk and accountability gaps. Both functions must reside in a single,
+            accountable entity that the Government of AP engages through a single window.
+          </p>
+
+          <div class="highlight-box">
+            <div class="hb-label">⚑ &nbsp;Dual Mandate</div>
+            <p class="hb-text">
+              <strong>NODAL AGENCY:</strong> Accountable to Government of AP for policy execution,
+              revenue remittance, compliance, and grievance redressal.<br><br>
+              <strong>TECHNOLOGY SERVICE PROVIDER (TSP):</strong> Responsible for platform design,
+              development, and deployment, integration, cybersecurity, uptime, and technology
+              evolution.<br><br>
+              These two roles are inseparable — the same entity that builds the platform is
+              accountable for what it produces. <strong>No layer of insulation. No outsourced
+              accountability.</strong>
+            </p>
+          </div>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 9</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4</span>
+          <h2 class="sec-title">జియాన్ టెక్నాలజీస్ LLP — <span class="accent">ద్వంద్వ పాత్ర</span>: నోడల్ ఏజెన్సీ &amp; TSP</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">
+            జియాన్ టెక్నాలజీస్ LLP ఒక ప్రత్యేకమైన ద్వంద్వ ఆదేశంలో ప్రతిపాదిస్తోంది. ఇది ఒక
+            ఉద్దేశపూర్వకమైన మరియు కీలకమైన డిజైన్ ఎంపిక — సాంకేతిక అమలును పాలన జవాబుదారీ
+            నుండి వేరు చేయడం వ్యవస్థాగత నష్టం మరియు జవాబుదారీ అంతరాలను సృష్టిస్తుంది.
+            రెండు విధులు ఒకే, జవాబుదారీ సంస్థలో ఉండాలి, దానితో AP ప్రభుత్వం ఒకే విండో ద్వారా
+            సంబంధం పెట్టుకుంటుంది.
+          </p>
+
+          <div class="highlight-box">
+            <div class="hb-label">⚑ &nbsp;ద్వంద్వ ఆదేశం</div>
+            <p class="hb-text">
+              <strong>నోడల్ ఏజెన్సీ:</strong> విధాన అమలు, ఆదాయ చెల్లింపు, సమ్మతి మరియు
+              ఫిర్యాదు పరిష్కారానికి AP ప్రభుత్వానికి జవాబుదారీగా ఉంటుంది.<br><br>
+              <strong>టెక్నాలజీ సర్వీస్ ప్రొవైడర్ (TSP):</strong> వేదిక డిజైన్, అభివృద్ధి మరియు
+              అమలు, ఏకీకరణ, సైబర్ భద్రత, అప్‌టైమ్ మరియు సాంకేతిక పరిణామానికి బాధ్యత
+              వహిస్తుంది.<br><br>
+              ఈ రెండు పాత్రలు విడదీయలేనివి — వేదికను నిర్మించే అదే సంస్థ అది ఉత్పత్తి చేసే
+              దానికి జవాబుదారీగా ఉంటుంది. <strong>ఎటువంటి అడ్డు పొర లేదు. ఔట్‌సోర్స్ చేయబడిన
+              జవాబుదారీ లేదు.</strong>
+            </p>
+          </div>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 9</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 13 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 14 — 4.1.1 + 4.1.2
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4.1 — Nodal Agency Accountabilities</span>
+          <h2 class="sec-title">Revenue Accountability &amp; <span class="accent">Policy Execution</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">4.1.1 Revenue Accountability</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Maintenance of a real-time APCS Revenue Ledger, accessible to designated government officers at all times</span></li>
+            <li><span class="arr">▸</span><span>Monthly revenue remittance: all government-owned revenue streams settled to a GoAP-designated account within 7 working days of month close</span></li>
+            <li><span class="arr">▸</span><span>Quarterly revenue reports submitted to Principal Secretary (IT&amp;C) and Principal Secretary (Commerce) with full transaction-level audit trails</span></li>
+            <li><span class="arr">▸</span><span>Annual revenue audit by a CAG-empanelled firm designated by the government</span></li>
+            <li><span class="arr">▸</span><span>Zero-tolerance transparency: any discrepancy between the APCS ledger and bank settlement triggers automatic flag and government notification</span></li>
+          </ul>
+
+          <h3 class="sub-head">4.1.2 Policy Execution</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>All commission rates, certification fees, advertising rates, and compliance penalties are set by Government of AP — Zian executes without discretion</span></li>
+            <li><span class="arr">▸</span><span>Any change to platform fee structures requires written approval from the APCS Governing Council before implementation</span></li>
+            <li><span class="arr">▸</span><span>Brand Andhra GI certification authority is vested in a government-designated body — Zian operates the registry but cannot grant or revoke certifications unilaterally</span></li>
+            <li><span class="arr">▸</span><span>Advertising content on APCS is subject to AP government content policy — Zian operates the ad marketplace within government-defined guardrails</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 9</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4.1 — నోడల్ ఏజెన్సీ జవాబుదారీలు</span>
+          <h2 class="sec-title">ఆదాయ జవాబుదారీ &amp; <span class="accent">విధాన అమలు</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">4.1.1 ఆదాయ జవాబుదారీ</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>నిజ-సమయ APCS ఆదాయ లెడ్జర్ నిర్వహణ, నిర్ణీత ప్రభుత్వ అధికారులకు ఎల్లప్పుడూ అందుబాటులో ఉంటుంది</span></li>
+            <li><span class="arr">▸</span><span>నెలవారీ ఆదాయ చెల్లింపు: అన్ని ప్రభుత్వ-యాజమాన్యపు ఆదాయ ప్రవాహాలు నెల ముగింపు నుండి 7 పని దినాలలో GoAP-నిర్ణీత ఖాతాకు సెటిల్ చేయబడతాయి</span></li>
+            <li><span class="arr">▸</span><span>త్రైమాసిక ఆదాయ నివేదికలు పూర్తి లావాదేవీ-స్థాయి ఆడిట్ ట్రెయిల్‌లతో ప్రధాన కార్యదర్శి (IT&amp;C) మరియు ప్రధాన కార్యదర్శి (వాణిజ్యం) కు సమర్పించబడతాయి</span></li>
+            <li><span class="arr">▸</span><span>ప్రభుత్వం నిర్ణయించిన CAG-ఎంపానెల్డ్ సంస్థ ద్వారా వార్షిక ఆదాయ ఆడిట్</span></li>
+            <li><span class="arr">▸</span><span>జీరో-టాలరెన్స్ పారదర్శకత: APCS లెడ్జర్ మరియు బ్యాంక్ సెటిల్‌మెంట్ మధ్య ఏదైనా వ్యత్యాసం స్వయంచాలక జెండా మరియు ప్రభుత్వ నోటిఫికేషన్‌ను ట్రిగ్గర్ చేస్తుంది</span></li>
+          </ul>
+
+          <h3 class="sub-head">4.1.2 విధాన అమలు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>అన్ని కమీషన్ రేట్లు, ధృవీకరణ రుసుములు, ప్రకటన రేట్లు మరియు సమ్మతి జరిమానాలు AP ప్రభుత్వం నిర్ణయిస్తుంది — జియాన్ విచక్షణ లేకుండా అమలు చేస్తుంది</span></li>
+            <li><span class="arr">▸</span><span>వేదిక రుసుము నిర్మాణాలలో ఏ మార్పు అయినా అమలుకు ముందు APCS గవర్నింగ్ కౌన్సిల్ నుండి లిఖిత అనుమతి అవసరం</span></li>
+            <li><span class="arr">▸</span><span>బ్రాండ్ ఆంధ్ర GI ధృవీకరణ అధికారం ప్రభుత్వ-నిర్ణీత సంస్థలో ఉంటుంది — జియాన్ రిజిస్ట్రీ నిర్వహిస్తుంది కానీ ఏకపక్షంగా ధృవీకరణలు మంజూరు చేయలేదు లేదా రద్దు చేయలేదు</span></li>
+            <li><span class="arr">▸</span><span>APCS లో ప్రకటన కంటెంట్ AP ప్రభుత్వ కంటెంట్ విధానానికి లోబడి ఉంటుంది — జియాన్ ప్రభుత్వ-నిర్వచించిన పరిమితులలో యాడ్ మార్కెట్‌ప్లేస్ నిర్వహిస్తుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 9</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 14 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 15 — 4.1.3 + 4.1.4
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4.1 — Continued</span>
+          <h2 class="sec-title">Seller Welfare &amp; <span class="accent">Data Sovereignty</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">4.1.3 Seller &amp; Entrepreneur Welfare</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Onboarding targets: quarterly KPIs for new seller/entrepreneur registrations, tracked district-wise and reported to the APCS Governing Council</span></li>
+            <li><span class="arr">▸</span><span>Grievance redressal: Zian operates a multilingual (Telugu, Hindi, English) grievance cell; escalations to government ombudsman within 48 hours</span></li>
+            <li><span class="arr">▸</span><span>Seller dispute resolution: binding arbitration mechanism with time-bound resolution SLAs</span></li>
+            <li><span class="arr">▸</span><span>One-Entrepreneur-Per-Family programme management: district-wise tracking of new entrepreneur registrations linked to the CM's vision dashboard</span></li>
+          </ul>
+
+          <h3 class="sub-head">4.1.4 Data Sovereignty</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>All transaction data, seller data, buyer data, and analytics generated on APCS are the property of Government of Andhra Pradesh</span></li>
+            <li><span class="arr">▸</span><span>Data stored on AP government-designated servers or AP State Data Centre — no data exits AP without explicit government approval</span></li>
+            <li><span class="arr">▸</span><span>Zian operates the platform as data processor; Government of AP is the data controller, consistent with the Digital Personal Data Protection Act, 2023</span></li>
+            <li><span class="arr">▸</span><span>Government retains the right to extract, audit, or migrate all data at any time with 30-day notice</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 10</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4.1 — కొనసాగింపు</span>
+          <h2 class="sec-title">విక్రేత సంక్షేమం &amp; <span class="accent">డేటా సార్వభౌమత్వం</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">4.1.3 విక్రేత &amp; పారిశ్రామికవేత్త సంక్షేమం</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>నమోదు లక్ష్యాలు: కొత్త విక్రేత/పారిశ్రామికవేత్త నమోదుల కోసం త్రైమాసిక KPIలు, జిల్లా-వారీగా ట్రాక్ చేయబడి APCS గవర్నింగ్ కౌన్సిల్‌కు నివేదించబడతాయి</span></li>
+            <li><span class="arr">▸</span><span>ఫిర్యాదు పరిష్కారం: జియాన్ బహుభాషా (తెలుగు, హిందీ, ఇంగ్లీష్) ఫిర్యాదు సెల్ నిర్వహిస్తుంది; 48 గంటలలో ప్రభుత్వ అంబుడ్స్‌మ్యాన్‌కు ఎస్కలేషన్</span></li>
+            <li><span class="arr">▸</span><span>విక్రేత వివాద పరిష్కారం: సమయ-నిర్ణీత రిజల్యూషన్ SLAలతో బైండింగ్ ఆర్బిట్రేషన్ మెకానిజం</span></li>
+            <li><span class="arr">▸</span><span>ఒక-కుటుంబం-ఒక-పారిశ్రామికవేత్త కార్యక్రమ నిర్వహణ: సీఎం యొక్క దృష్టి డాష్‌బోర్డ్‌తో అనుసంధానించిన కొత్త పారిశ్రామికవేత్త నమోదుల జిల్లా-వారీ ట్రాకింగ్</span></li>
+          </ul>
+
+          <h3 class="sub-head">4.1.4 డేటా సార్వభౌమత్వం</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>APCS లో ఉత్పన్నమయ్యే అన్ని లావాదేవీ డేటా, విక్రేత డేటా, కొనుగోలుదారు డేటా మరియు విశ్లేషణలు ఆంధ్రప్రదేశ్ ప్రభుత్వం యొక్క ఆస్తి</span></li>
+            <li><span class="arr">▸</span><span>AP ప్రభుత్వ-నిర్ణీత సర్వర్లు లేదా AP రాష్ట్ర డేటా కేంద్రంలో డేటా నిల్వ — స్పష్టమైన ప్రభుత్వ అనుమతి లేకుండా ఏ డేటా AP నుండి బయటకు వెళ్ళదు</span></li>
+            <li><span class="arr">▸</span><span>జియాన్ డేటా ప్రాసెసర్‌గా వేదికను నిర్వహిస్తుంది; AP ప్రభుత్వం డిజిటల్ వ్యక్తిగత డేటా రక్షణ చట్టం, 2023 కు అనుగుణంగా డేటా నియంత్రికగా ఉంటుంది</span></li>
+            <li><span class="arr">▸</span><span>ప్రభుత్వం 30-రోజుల నోటీసుతో ఎప్పుడైనా అన్ని డేటాను సేకరించే, ఆడిట్ చేసే లేదా మైగ్రేట్ చేసే హక్కును కలిగి ఉంటుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 10</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 15 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 16 — 4.2.1 Platform Architecture
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4.2 — Technology Service Provider</span>
+          <h2 class="sec-title">Platform <span class="accent">Architecture &amp; Development</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">4.2.1 Platform Architecture &amp; Development</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>Design and development of APCS buyer application, seller application, and logistics participant modules per ONDC protocol specifications</span></li>
+            <li><span class="arr">▸</span><span>API integration with ONDC Gateway — real-time catalogue sync, order management, fulfillment, and payment protocol compliance</span></li>
+            <li><span class="arr">▸</span><span>Telugu-language-first UX: all seller onboarding, buyer flows, and support interfaces available in Telugu with AI-powered language assistance</span></li>
+            <li><span class="arr">▸</span><span>Mobile-first architecture: APCS accessible via progressive web application and native Android app optimized for low-bandwidth rural connectivity</span></li>
+            <li><span class="arr">▸</span><span>Interoperability: APCS integrates with AP government legacy systems — AP Fibernet, RBK network, APSSDC, AP Agros, and AP Police crime data for counterfeit enforcement</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 10</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4.2 — టెక్నాలజీ సర్వీస్ ప్రొవైడర్</span>
+          <h2 class="sec-title">వేదిక <span class="accent">నిర్మాణం &amp; అభివృద్ధి</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">4.2.1 వేదిక నిర్మాణం &amp; అభివృద్ధి</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>ONDC ప్రోటోకాల్ స్పెసిఫికేషన్‌ల ప్రకారం APCS కొనుగోలుదారు దరఖాస్తు, విక్రేత దరఖాస్తు మరియు లాజిస్టిక్స్ పాల్గొనేవారి మాడ్యూల్స్ డిజైన్ మరియు అభివృద్ధి</span></li>
+            <li><span class="arr">▸</span><span>ONDC గేట్‌వేతో API ఏకీకరణ — నిజ-సమయ కేటలాగ్ సమకాలీకరణ, ఆర్డర్ నిర్వహణ, నెరవేర్పు మరియు చెల్లింపు ప్రోటోకాల్ సమ్మతి</span></li>
+            <li><span class="arr">▸</span><span>తెలుగు-భాష-మొదటి UX: AI-శక్తితో కూడిన భాషా సహాయంతో తెలుగులో అన్ని విక్రేత నమోదు, కొనుగోలుదారు ప్రవాహాలు మరియు మద్దతు ఇంటర్‌ఫేస్‌లు అందుబాటులో ఉంటాయి</span></li>
+            <li><span class="arr">▸</span><span>మొబైల్-మొదటి నిర్మాణం: తక్కువ-బ్యాండ్‌విడ్త్ గ్రామీణ కనెక్టివిటీ కోసం ఆప్టిమైజ్ చేయబడిన ప్రోగ్రెసివ్ వెబ్ దరఖాస్తు మరియు స్థానిక Android యాప్ ద్వారా APCS అందుబాటులో ఉంటుంది</span></li>
+            <li><span class="arr">▸</span><span>ఇంటరాపరబిలిటీ: APCS AP ప్రభుత్వ లెగసీ వ్యవస్థలతో అనుసంధానమవుతుంది — AP ఫైబర్‌నెట్, RBK నెట్‌వర్క్, APSSDC, AP అగ్రోస్ మరియు నకిలీ అమలు కోసం AP పోలీస్ నేర డేటా</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 10</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 16 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 17 — 4.2.2 Integration Architecture (Part 1)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4.2.2 — Integration Architecture</span>
+          <h2 class="sec-title">Integration <span class="accent">Architecture</span> <span style="font-size:1.4rem;font-weight:600;color:#6b7280;">(1 of 2)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Integration Target</th>
+                <th>Technical Interface</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ONDC Network</td>
+                <td>Certified NP integration — buyer app, seller app, logistics NP per ONDC spec v1.2+</td>
+              </tr>
+              <tr>
+                <td>Aadhaar / DigiLocker</td>
+                <td>Identity verification for seller and buyer onboarding; GST auto-fetch</td>
+              </tr>
+              <tr>
+                <td>Payment Systems</td>
+                <td>UPI, BBPS, RuPay — settlement via NPCI-compliant payment aggregator</td>
+              </tr>
+              <tr>
+                <td>GST Network (GSTN)</td>
+                <td>Auto-populated invoices, e-way bill generation, GSTR-1 filing assistance</td>
+              </tr>
+              <tr>
+                <td>AP State Data Centre</td>
+                <td>Primary data hosting — all APCS data resident within AP SDC</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 11</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4.2.2 — ఏకీకరణ నిర్మాణం</span>
+          <h2 class="sec-title">ఏకీకరణ <span class="accent">నిర్మాణం</span> <span style="font-size:1.4rem;font-weight:600;color:#6b7280;">(1 లో 2)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ఏకీకరణ లక్ష్యం</th>
+                <th>సాంకేతిక ఇంటర్‌ఫేస్</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ONDC నెట్‌వర్క్</td>
+                <td>సర్టిఫైడ్ NP ఏకీకరణ — కొనుగోలుదారు యాప్, విక్రేత యాప్, లాజిస్టిక్స్ NP per ONDC spec v1.2+</td>
+              </tr>
+              <tr>
+                <td>ఆధార్ / DigiLocker</td>
+                <td>విక్రేత మరియు కొనుగోలుదారు నమోదు కోసం గుర్తింపు ధృవీకరణ; GST స్వయంచాలక తీసుకోవడం</td>
+              </tr>
+              <tr>
+                <td>చెల్లింపు వ్యవస్థలు</td>
+                <td>UPI, BBPS, RuPay — NPCI-సమ్మత చెల్లింపు అగ్రిగేటర్ ద్వారా పరిష్కారం</td>
+              </tr>
+              <tr>
+                <td>GST నెట్‌వర్క్ (GSTN)</td>
+                <td>స్వయంచాలకంగా నింపిన ఇన్వాయిస్‌లు, ఇ-వే బిల్ తయారీ, GSTR-1 ఫైలింగ్ సహాయం</td>
+              </tr>
+              <tr>
+                <td>AP రాష్ట్ర డేటా సెంటర్</td>
+                <td>ప్రాథమిక డేటా హోస్టింగ్ — AP SDC లో అన్ని APCS డేటా నివాసం</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 11</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 17 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 18 — 4.2.2 Integration Architecture (Part 2)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4.2.2 — Integration Architecture</span>
+          <h2 class="sec-title">Integration <span class="accent">Architecture</span> <span style="font-size:1.4rem;font-weight:600;color:#6b7280;">(2 of 2)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Integration Target</th>
+                <th>Technical Interface</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>RBK Network (Agri)</td>
+                <td>Farmer onboarding integration via 10,750 RBK outlets across AP districts</td>
+              </tr>
+              <tr>
+                <td>APSSDC (Skills)</td>
+                <td>Skill certification badges displayed on My Services seller profiles</td>
+              </tr>
+              <tr>
+                <td>AP Fibernet</td>
+                <td>Last-mile connectivity for rural seller onboarding</td>
+              </tr>
+              <tr>
+                <td>GeM (Govt e-Marketplace)</td>
+                <td>APCS MSME listings sync with GeM for government procurement discovery</td>
+              </tr>
+              <tr>
+                <td>eNAM</td>
+                <td>Agri vertical price benchmarking and mandi integration for transparent farmer transactions</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 11</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4.2.2 — ఏకీకరణ నిర్మాణం</span>
+          <h2 class="sec-title">ఏకీకరణ <span class="accent">నిర్మాణం</span> <span style="font-size:1.4rem;font-weight:600;color:#6b7280;">(2 లో 2)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ఏకీకరణ లక్ష్యం</th>
+                <th>సాంకేతిక ఇంటర్‌ఫేస్</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>RBK నెట్‌వర్క్ (వ్యవసాయం)</td>
+                <td>AP జిల్లాల అంతటా 10,750 RBK కేంద్రాల ద్వారా రైతు నమోదు ఏకీకరణ</td>
+              </tr>
+              <tr>
+                <td>APSSDC (నైపుణ్యాలు)</td>
+                <td>నా సేవలు విక్రేత ప్రొఫైల్‌లలో నైపుణ్య సర్టిఫికేషన్ బ్యాడ్జ్‌లు ప్రదర్శించబడతాయి</td>
+              </tr>
+              <tr>
+                <td>AP ఫైబర్‌నెట్</td>
+                <td>గ్రామీణ విక్రేత నమోదు కోసం చివరి-మైలు కనెక్టివిటీ</td>
+              </tr>
+              <tr>
+                <td>GeM (ప్రభుత్వ ఇ-మార్కెట్‌ప్లేస్)</td>
+                <td>ప్రభుత్వ సేకరణ ఆవిష్కరణ కోసం APCS MSME జాబితాలు GeM తో సమకాలీకరణ</td>
+              </tr>
+              <tr>
+                <td>eNAM</td>
+                <td>పారదర్శక రైతు లావాదేవీల కోసం వ్యవసాయ వర్టికల్ ధర బెంచ్‌మార్కింగ్ మరియు మండి ఏకీకరణ</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 11</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 18 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 19 — 4.2.3 Platform Performance Standards (SLAs)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 4.2.3 — Technology Service Provider</span>
+          <h2 class="sec-title">Platform Performance <span class="accent">Standards (SLAs)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Standard</th>
+                <th>Accountability Mechanism</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Platform Uptime</td>
+                <td>99.5% monthly</td>
+                <td>Penalties triggered below threshold; compensation schedule in MoU</td>
+              </tr>
+              <tr>
+                <td>Transaction Success Rate</td>
+                <td>98%+ completed transactions</td>
+                <td>Failed transaction auto-refund within 2 hours</td>
+              </tr>
+              <tr>
+                <td>Seller Onboarding Turnaround</td>
+                <td>Live within 24 hours of document submission</td>
+                <td>Automated verification with human review for exceptions</td>
+              </tr>
+              <tr>
+                <td>Grievance Resolution</td>
+                <td>L1: 24 hrs | L2: 72 hrs | L3: 7 days</td>
+                <td>Escalation to government ombudsman at Level 3</td>
+              </tr>
+              <tr>
+                <td>Cybersecurity</td>
+                <td>ISO 27001 compliance within 18 months of go-live</td>
+                <td>Bi-annual third-party penetration testing; CERT-In compliance</td>
+              </tr>
+              <tr>
+                <td>Data Backup</td>
+                <td>Real-time replication to secondary AP SDC node</td>
+                <td>RPO: 1 hour | RTO: 4 hours</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 12</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 4.2.3 — టెక్నాలజీ సర్వీస్ ప్రొవైడర్</span>
+          <h2 class="sec-title">వేదిక పనితీరు <span class="accent">ప్రమాణాలు (SLAs)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>పారామీటర్</th>
+                <th>ప్రమాణం</th>
+                <th>జవాబుదారీతనం విధానం</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>వేదిక అప్‌టైమ్</td>
+                <td>నెలవారీ 99.5%</td>
+                <td>పరిమితి కంటే తక్కువైతే జరిమానాలు; MoU లో నష్టపరిహార షెడ్యూల్</td>
+              </tr>
+              <tr>
+                <td>లావాదేవీ విజయ రేటు</td>
+                <td>98%+ పూర్తయిన లావాదేవీలు</td>
+                <td>విఫలమైన లావాదేవీ 2 గంటల్లో స్వయంచాలక రీఫండ్</td>
+              </tr>
+              <tr>
+                <td>విక్రేత నమోదు వేగం</td>
+                <td>పత్రాల సమర్పణ నుండి 24 గంటల్లో లైవ్</td>
+                <td>మినహాయింపుల కోసం మానవ సమీక్షతో స్వయంచాలక ధృవీకరణ</td>
+              </tr>
+              <tr>
+                <td>ఫిర్యాదు పరిష్కారం</td>
+                <td>L1: 24 గం | L2: 72 గం | L3: 7 రోజులు</td>
+                <td>స్థాయి 3 వద్ద ప్రభుత్వ అంబుడ్స్‌మన్‌కు పెంపు</td>
+              </tr>
+              <tr>
+                <td>సైబర్ భద్రత</td>
+                <td>లైవ్ అయిన 18 నెలల్లో ISO 27001 సమ్మతి</td>
+                <td>ద్వైవార్షిక మూడవ-పక్ష పెనిట్రేషన్ టెస్టింగ్; CERT-In సమ్మతి</td>
+              </tr>
+              <tr>
+                <td>డేటా బ్యాకప్</td>
+                <td>ద్వితీయ AP SDC నోడ్‌కు నిజ-సమయ రెప్లికేషన్</td>
+                <td>RPO: 1 గంట | RTO: 4 గంటలు</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 12</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 19 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 20 — Section 5 Intro + Income Principle
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 5 — Government Income Generation</span>
+          <h2 class="sec-title">Revenue <span class="accent">Architecture</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">The income generation design of APCS follows the NPCI-UPI model: government-owned infrastructure where private commerce participants pay for access and premium features, while the sovereign entity retains the revenue. The following section defines each income stream, its trigger event, and its flow to the state exchequer.</p>
+
+          <div class="highlight-box">
+            <strong>INCOME PRINCIPLE</strong><br><br>
+            EVERY transaction on APCS is a revenue event for the Government of Andhra Pradesh. No stream is dependent on a single vertical, a single partner, or a single technology contract. Revenue scales with commerce volume — the more AP's economy grows, the more the state earns. Interests are permanently aligned.
+          </div>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 13</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 5 — ప్రభుత్వ ఆదాయ సృష్టి</span>
+          <h2 class="sec-title">ఆదాయ <span class="accent">నిర్మాణం</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">APCS యొక్క ఆదాయ సృష్టి డిజైన్ NPCI-UPI మోడల్‌ను అనుసరిస్తుంది: ప్రభుత్వ-యాజమాన్య మౌలిక సదుపాయాలు, ఇక్కడ ప్రైవేట్ వాణిజ్య పాల్గొనేవారు యాక్సెస్ మరియు ప్రీమియం ఫీచర్‌ల కోసం చెల్లిస్తారు, సర్వసత్తాక సంస్థ ఆదాయాన్ని నిలుపుకుంటుంది. ఈ విభాగం ప్రతి ఆదాయ స్రవంతి, దాని ట్రిగ్గర్ సంఘటన, మరియు రాష్ట్ర ఖజానాకు దాని ప్రవాహాన్ని నిర్వచిస్తుంది.</p>
+
+          <div class="highlight-box">
+            <strong>ఆదాయ సూత్రం</strong><br><br>
+            APCS లోని ప్రతి లావాదేవీ ఆంధ్రప్రదేశ్ ప్రభుత్వానికి ఆదాయ సంఘటన. ఏ స్రవంతి ఒక్క వర్టికల్, ఒక్క భాగస్వామి, లేదా ఒక్క సాంకేతిక ఒప్పందంపై ఆధారపడి లేదు. ఆదాయం వాణిజ్య పరిమాణంతో పెరుగుతుంది — AP ఆర్థిక వ్యవస్థ ఎంత వృద్ధి చెందితే, రాష్ట్రం అంత సంపాదిస్తుంది. ప్రయోజనాలు శాశ్వతంగా సమలేఖనం చేయబడ్డాయి.
+          </div>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 13</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 20 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 21 — Income Stream 01
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 5 — Revenue Architecture</span>
+          <h2 class="sec-title">Income Stream <span class="accent">01 — Platform Transaction Fee</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">A micro-levy applied to every completed commerce transaction flowing through APCS. The rate is set by Government of AP, analogous to NPCI's MDR-equivalent for UPI commercial transactions. The fee is split-configurable: buyer-side, seller-side, or shared — with zero marginal cost to the state.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Trigger:</strong> Order placed and delivered, or service completed on any of the 8 APCS verticals</span></li>
+            <li><span class="arr">▸</span><span><strong>Collection:</strong> Deducted at settlement by APCS payment layer; remitted to GoAP on T+7 basis</span></li>
+            <li><span class="arr">▸</span><span><strong>Policy lever:</strong> Differentiated rates per vertical — lower for agri and MSME to incentivize adoption; standard for food and grocery; premium for B2B</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 13</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 5 — ఆదాయ నిర్మాణం</span>
+          <h2 class="sec-title">ఆదాయ స్రవంతి <span class="accent">01 — వేదిక లావాదేవీ రుసుము</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">APCS ద్వారా ప్రవహించే ప్రతి పూర్తయిన వాణిజ్య లావాదేవీకి మైక్రో-లెవీ వర్తిస్తుంది. రేటు AP ప్రభుత్వంచే నిర్ణయించబడుతుంది, UPI వాణిజ్య లావాదేవీలకు NPCI యొక్క MDR-సమానంగా. రుసుము విభజన-కాన్ఫిగర్ చేయదగినది: కొనుగోలుదారు-వైపు, విక్రేత-వైపు, లేదా భాగస్వామ్యం — రాష్ట్రానికి సున్నా అంచు వ్యయంతో.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>ట్రిగ్గర్:</strong> 8 APCS వర్టికల్‌లలో ఏదైనా ఒకదానిలో ఆర్డర్ ఇచ్చి డెలివరీ అయినప్పుడు లేదా సేవ పూర్తయినప్పుడు</span></li>
+            <li><span class="arr">▸</span><span><strong>వసూలు:</strong> APCS చెల్లింపు లేయర్ ద్వారా పరిష్కారం వద్ద తీసివేయబడుతుంది; T+7 ప్రాతిపదికన GoAP కు చెల్లింపు</span></li>
+            <li><span class="arr">▸</span><span><strong>విధాన నిచ్చెన:</strong> వర్టికల్ వారీగా భేదపడిన రేట్లు — అడాప్షన్ ప్రోత్సహించడానికి వ్యవసాయం మరియు MSMEకి తక్కువ; ఆహారం మరియు కిరాణాకు సాధారణ; B2B కి ప్రీమియం</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 13</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 21 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 22 — Income Stream 02
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 5 — Revenue Architecture</span>
+          <h2 class="sec-title">Income Stream <span class="accent">02 — Advertising &amp; Sponsored Listings</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">APCS operates a government-controlled digital advertising marketplace. Sellers, MSME manufacturers, agri processors, and national brands pay to appear at the top of APCS search results, category pages, and curated collections. The Government of AP owns the advertising inventory — analogous to Google Ads, but with the state treasury as the beneficiary.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Sponsored Search Listings:</strong> Sellers pay per impression or per click for top-of-search placement</span></li>
+            <li><span class="arr">▸</span><span><strong>Category Banner Ads:</strong> Manufacturers and brands pay for homepage and category-level display banners</span></li>
+            <li><span class="arr">▸</span><span><strong>Geo-Targeted District Ads:</strong> Businesses pay premium rates to reach consumers only within their pin codes</span></li>
+            <li><span class="arr">▸</span><span><strong>Seasonal Campaign Windows:</strong> Ugadi, Sankranti, Dasara, and Diwali promotional slots at premium rates — state monetizes AP's cultural calendar</span></li>
+            <li><span class="arr">▸</span><span><strong>National Brand Access Fee:</strong> National brands (HUL, ITC, Marico, Reliance) pay an annual fee to reach AP's consumer base via APCS</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 13</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 5 — ఆదాయ నిర్మాణం</span>
+          <h2 class="sec-title">ఆదాయ స్రవంతి <span class="accent">02 — ప్రకటనలు &amp; స్పాన్సర్డ్ జాబితాలు</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">APCS ప్రభుత్వ-నియంత్రిత డిజిటల్ ప్రకటన మార్కెట్‌ప్లేస్‌ను నిర్వహిస్తుంది. విక్రేతలు, MSME తయారీదారులు, వ్యవసాయ ప్రాసెసర్లు, మరియు జాతీయ బ్రాండ్‌లు APCS శోధన ఫలితాల పైభాగంలో కనిపించడానికి చెల్లిస్తారు. AP ప్రభుత్వం ప్రకటన జాబితాను కలిగి ఉంది — Google Ads కి సమానంగా, కానీ రాష్ట్ర ఖజానా లబ్ధిదారుగా.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>స్పాన్సర్డ్ శోధన జాబితాలు:</strong> విక్రేతలు శోధన పైభాగ స్థానం కోసం ఇంప్రెషన్ లేదా క్లిక్ ప్రతి చెల్లిస్తారు</span></li>
+            <li><span class="arr">▸</span><span><strong>కేటగిరీ బ్యానర్ ప్రకటనలు:</strong> తయారీదారులు మరియు బ్రాండ్‌లు హోమ్‌పేజ్ మరియు కేటగిరీ-స్థాయి డిస్‌ప్లే బ్యానర్‌లకు చెల్లిస్తారు</span></li>
+            <li><span class="arr">▸</span><span><strong>జియో-టార్గెటెడ్ జిల్లా ప్రకటనలు:</strong> వ్యాపారాలు తమ పిన్ కోడ్‌ల పరిధిలోనే వినియోగదారులను చేరుకోవడానికి ప్రీమియం రేట్లు చెల్లిస్తాయి</span></li>
+            <li><span class="arr">▸</span><span><strong>సీజనల్ క్యాంపెయిన్ విండోలు:</strong> ఉగాది, సంక్రాంతి, దసరా, దీపావళి ప్రమోషనల్ స్లాట్‌లు ప్రీమియం రేట్లకు — రాష్ట్రం AP సాంస్కృతిక క్యాలెండర్‌ను ఆదాయంగా మార్చుకుంటుంది</span></li>
+            <li><span class="arr">▸</span><span><strong>జాతీయ బ్రాండ్ యాక్సెస్ రుసుము:</strong> జాతీయ బ్రాండ్‌లు (HUL, ITC, Marico, Reliance) APCS ద్వారా AP వినియోగదారు బేస్‌ను చేరుకోవడానికి వార్షిక రుసుము చెల్లిస్తాయి</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 13</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 22 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 23 — Income Stream 03 & 04
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 5 — Revenue Architecture</span>
+          <h2 class="sec-title">Income Streams <span class="accent">03 &amp; 04</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">Income Stream 03 — Brand Andhra GI Tag Certification Licensing</h3>
+          <p class="body-text">Manufacturers, artisan collectives, and exporters seeking to list under the authenticated Brand Andhra banner pay an annual certification fee. The state grants the certification via a designated authority; APCS administers the registry and collects the fee.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Annual certification renewal:</strong> Recurring revenue that grows with the number of authenticated producers</span></li>
+            <li><span class="arr">▸</span><span><strong>Export certification:</strong> Exporters pay a per-shipment Brand Andhra export certification fee for international trade</span></li>
+            <li><span class="arr">▸</span><span><strong>Counterfeit enforcement penalties:</strong> Sellers found misusing Brand Andhra GI certification are subject to statutory penalties — fine revenue flows to state</span></li>
+          </ul>
+
+          <h3 class="sub-head" style="margin-top:28px;">Income Stream 04 — Seller Onboarding &amp; SaaS Subscriptions</h3>
+          <p class="body-text">MSME, agri, and individual sellers pay a tiered subscription fee for access to APCS's advanced seller tools. Basic listing is free to maximize One-Entrepreneur-Per-Family enrollment.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Free tier:</strong> Basic seller account — list products, receive orders, access standard logistics integration</span></li>
+            <li><span class="arr">▸</span><span><strong>Growth tier:</strong> Analytics, priority placement, multi-category listings, automated GST filing prompts</span></li>
+            <li><span class="arr">▸</span><span><strong>Enterprise tier:</strong> B2B procurement features, export module, API access, dedicated account manager</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 14</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 5 — ఆదాయ నిర్మాణం</span>
+          <h2 class="sec-title">ఆదాయ స్రవంతులు <span class="accent">03 &amp; 04</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">ఆదాయ స్రవంతి 03 — బ్రాండ్ ఆంధ్ర GI ట్యాగ్ సర్టిఫికేషన్ లైసెన్సింగ్</h3>
+          <p class="body-text">ప్రామాణీకృత బ్రాండ్ ఆంధ్ర బ్యానర్ కింద జాబితా చేయాలనుకునే తయారీదారులు, చేతివృత్తి సమూహాలు మరియు ఎగుమతిదారులు వార్షిక సర్టిఫికేషన్ రుసుము చెల్లిస్తారు. రాష్ట్రం నిర్దేశిత అధికారం ద్వారా సర్టిఫికేషన్ మంజూరు చేస్తుంది; APCS రిజిస్ట్రీని నిర్వహించి రుసుము వసూలు చేస్తుంది.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>వార్షిక సర్టిఫికేషన్ పునరుద్ధరణ:</strong> ప్రామాణీకృత ఉత్పత్తిదారుల సంఖ్యతో పెరిగే పునరావర్తన ఆదాయం</span></li>
+            <li><span class="arr">▸</span><span><strong>ఎగుమతి సర్టిఫికేషన్:</strong> అంతర్జాతీయ వాణిజ్యం కోసం ఎగుమతిదారులు ప్రతి షిప్‌మెంట్‌కు బ్రాండ్ ఆంధ్ర ఎగుమతి సర్టిఫికేషన్ రుసుము చెల్లిస్తారు</span></li>
+            <li><span class="arr">▸</span><span><strong>నకిలీ అమలు జరిమానాలు:</strong> బ్రాండ్ ఆంధ్ర GI సర్టిఫికేషన్‌ను దుర్వినియోగం చేసిన విక్రేతలకు చట్టబద్ధమైన జరిమానాలు — జరిమానా ఆదాయం రాష్ట్రానికి వెళ్తుంది</span></li>
+          </ul>
+
+          <h3 class="sub-head" style="margin-top:28px;">ఆదాయ స్రవంతి 04 — విక్రేత నమోదు &amp; SaaS సభ్యత్వాలు</h3>
+          <p class="body-text">MSME, వ్యవసాయం, మరియు వ్యక్తిగత విక్రేతలు APCS యొక్క అధునాతన విక్రేత సాధనాలను యాక్సెస్ చేయడానికి స్థాయీకృత సభ్యత్వ రుసుము చెల్లిస్తారు. ఒక కుటుంబం-ఒక వ్యవస్థాపకుడు నమోదును గరిష్టంగా చేయడానికి ప్రాథమిక జాబితా ఉచితం.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>ఉచిత స్థాయి:</strong> ప్రాథమిక విక్రేత ఖాతా — ఉత్పత్తులను జాబితా చేయడం, ఆర్డర్‌లు స్వీకరించడం, ప్రామాణిక లాజిస్టిక్స్ ఏకీకరణ యాక్సెస్</span></li>
+            <li><span class="arr">▸</span><span><strong>గ్రోత్ స్థాయి:</strong> విశ్లేషణలు, ప్రాధాన్యత స్థానం, బహు-కేటగిరీ జాబితాలు, స్వయంచాలక GST ఫైలింగ్ ప్రాంప్ట్‌లు</span></li>
+            <li><span class="arr">▸</span><span><strong>ఎంటర్‌ప్రైజ్ స్థాయి:</strong> B2B సేకరణ ఫీచర్‌లు, ఎగుమతి మాడ్యూల్, API యాక్సెస్, నిర్దేశిత ఖాతా నిర్వాహకుడు</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 14</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 23 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 24 — Income Stream 05 & 06
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 5 — Revenue Architecture</span>
+          <h2 class="sec-title">Income Streams <span class="accent">05 &amp; 06</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">Income Stream 05 — GST &amp; Compliance Services</h3>
+          <p class="body-text">APCS becomes the de-facto GST compliance gateway for AP commerce. Sellers processing orders through APCS have their GST invoices auto-generated, GSTR-1 data auto-populated, and e-way bills auto-generated. This service is bundled at a per-invoice or monthly subscription fee.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>GST registration assistance:</strong> New MSME and agri sellers pay a one-time assisted registration fee</span></li>
+            <li><span class="arr">▸</span><span><strong>Compliance filing subscription:</strong> Monthly fee for automated GSTR-1 and GSTR-3B filing assistance</span></li>
+            <li><span class="arr">▸</span><span><strong>Policy benefit:</strong> APCS compliance data gives the state government real-time visibility into AP's informal-to-formal commerce transition</span></li>
+          </ul>
+
+          <h3 class="sub-head" style="margin-top:28px;">Income Stream 06 — Government Procurement Marketplace</h3>
+          <p class="body-text">AP government departments and local bodies can use APCS as a state-level procurement marketplace — analogous to GeM but controlled by GoAP. Vendors pay a discovery and transaction fee for government procurement orders processed through APCS.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Vendor registration fee:</strong> One-time fee for APCS government procurement empanelment</span></li>
+            <li><span class="arr">▸</span><span><strong>Bid processing fee:</strong> Per-tender or per-procurement transaction fee</span></li>
+            <li><span class="arr">▸</span><span><strong>Integration with GeM:</strong> APCS government procurement module syncs with Central GeM to maximise AP MSME procurement opportunities</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 14–15</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 5 — ఆదాయ నిర్మాణం</span>
+          <h2 class="sec-title">ఆదాయ స్రవంతులు <span class="accent">05 &amp; 06</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">ఆదాయ స్రవంతి 05 — GST &amp; సమ్మతి సేవలు</h3>
+          <p class="body-text">APCS AP వాణిజ్యానికి వాస్తవ GST సమ్మతి గేట్‌వేగా మారుతుంది. APCS ద్వారా ఆర్డర్‌లు ప్రాసెస్ చేసే విక్రేతలకు GST ఇన్వాయిస్‌లు స్వయంచాలకంగా తయారవుతాయి, GSTR-1 డేటా స్వయంచాలకంగా నింపబడుతుంది మరియు ఇ-వే బిల్లులు స్వయంచాలకంగా రూపొందుతాయి. ఈ సేవ ప్రతి ఇన్వాయిస్ లేదా నెలవారీ సభ్యత్వ రుసుముగా బండిల్ చేయబడుతుంది.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>GST నమోదు సహాయం:</strong> కొత్త MSME మరియు వ్యవసాయ విక్రేతలు ఒక్కసారి సహాయక నమోదు రుసుము చెల్లిస్తారు</span></li>
+            <li><span class="arr">▸</span><span><strong>సమ్మతి ఫైలింగ్ సభ్యత్వం:</strong> స్వయంచాలక GSTR-1 మరియు GSTR-3B ఫైలింగ్ సహాయానికి నెలవారీ రుసుము</span></li>
+            <li><span class="arr">▸</span><span><strong>విధాన ప్రయోజనం:</strong> APCS సమ్మతి డేటా AP యొక్క అనధికారిక-నుండి-అధికారిక వాణిజ్య మార్పుపై రాష్ట్ర ప్రభుత్వానికి నిజ-సమయ దృశ్యమానత ఇస్తుంది</span></li>
+          </ul>
+
+          <h3 class="sub-head" style="margin-top:28px;">ఆదాయ స్రవంతి 06 — ప్రభుత్వ సేకరణ మార్కెట్‌ప్లేస్</h3>
+          <p class="body-text">AP ప్రభుత్వ విభాగాలు మరియు స్థానిక సంస్థలు APCS ను రాష్ట్ర-స్థాయి సేకరణ మార్కెట్‌ప్లేస్‌గా ఉపయోగించవచ్చు — GeM కి సమానంగా కానీ GoAP చే నియంత్రించబడుతుంది. APCS ద్వారా ప్రాసెస్ చేయబడిన ప్రభుత్వ సేకరణ ఆర్డర్‌లకు వెండర్‌లు ఆవిష్కరణ మరియు లావాదేవీ రుసుము చెల్లిస్తారు.</p>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>వెండర్ నమోదు రుసుము:</strong> APCS ప్రభుత్వ సేకరణ ఎంపానెల్‌మెంట్ కోసం ఒక్కసారి రుసుము</span></li>
+            <li><span class="arr">▸</span><span><strong>బిడ్ ప్రాసెసింగ్ రుసుము:</strong> ప్రతి టెండర్ లేదా ప్రతి సేకరణ లావాదేవీ రుసుము</span></li>
+            <li><span class="arr">▸</span><span><strong>GeM తో ఏకీకరణ:</strong> AP MSME సేకరణ అవకాశాలను గరిష్టంగా చేయడానికి APCS ప్రభుత్వ సేకరణ మాడ్యూల్ కేంద్ర GeM తో సమకాలీకరిస్తుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 14–15</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 24 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 25 — Revenue Summary Table
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 5 — Government Income Generation</span>
+          <h2 class="sec-title">Revenue Streams — <span class="accent">Summary &amp; Activation</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Stream</th>
+                <th>Revenue Type</th>
+                <th>Activation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01 — Transaction Fee</td>
+                <td>Continuous, scales with commerce volume</td>
+                <td>Month 1 of go-live</td>
+              </tr>
+              <tr>
+                <td>02 — Advertising</td>
+                <td>High margin; Day-1 activation, grows with platform size</td>
+                <td>Month 6 (beta)</td>
+              </tr>
+              <tr>
+                <td>03 — GI Certification</td>
+                <td>Recurring annual revenue; grows with Brand Andhra premium</td>
+                <td>Month 3</td>
+              </tr>
+              <tr>
+                <td>04 — SaaS Subscriptions</td>
+                <td>Predictable, recurring; grows with seller base</td>
+                <td>Month 7</td>
+              </tr>
+              <tr>
+                <td>05 — GST Compliance</td>
+                <td>Transaction-linked; scales with formalization</td>
+                <td>Month 9</td>
+              </tr>
+              <tr>
+                <td>06 — Procurement Market</td>
+                <td>Fee + cost savings; grows with procurement volume</td>
+                <td>Month 22</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 15</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 5 — ప్రభుత్వ ఆదాయ సృష్టి</span>
+          <h2 class="sec-title">ఆదాయ స్రవంతులు — <span class="accent">సారాంశం &amp; సక్రియత</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>స్రవంతి</th>
+                <th>ఆదాయ రకం</th>
+                <th>సక్రియత</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01 — లావాదేవీ రుసుము</td>
+                <td>నిరంతరం, వాణిజ్య పరిమాణంతో పెరుగుతుంది</td>
+                <td>లైవ్ అయిన 1వ నెల</td>
+              </tr>
+              <tr>
+                <td>02 — ప్రకటనలు</td>
+                <td>అధిక మార్జిన్; డే-1 సక్రియత, వేదిక పరిమాణంతో పెరుగుతుంది</td>
+                <td>6వ నెల (బీటా)</td>
+              </tr>
+              <tr>
+                <td>03 — GI సర్టిఫికేషన్</td>
+                <td>పునరావర్తన వార్షిక ఆదాయం; బ్రాండ్ ఆంధ్ర ప్రీమియంతో పెరుగుతుంది</td>
+                <td>3వ నెల</td>
+              </tr>
+              <tr>
+                <td>04 — SaaS సభ్యత్వాలు</td>
+                <td>అంచనా వేయదగిన, పునరావర్తన; విక్రేత బేస్‌తో పెరుగుతుంది</td>
+                <td>7వ నెల</td>
+              </tr>
+              <tr>
+                <td>05 — GST సమ్మతి</td>
+                <td>లావాదేవీ-అనుసంధానిత; అధికారికీకరణతో పెరుగుతుంది</td>
+                <td>9వ నెల</td>
+              </tr>
+              <tr>
+                <td>06 — సేకరణ మార్కెట్</td>
+                <td>రుసుము + వ్యయ పొదుపులు; సేకరణ పరిమాణంతో పెరుగుతుంది</td>
+                <td>22వ నెల</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 15</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 25 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 26 — Section 6 intro + 6.1 Steps 1–3
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 6 — CM's Vision</span>
+          <h2 class="sec-title">One Entrepreneur Per <span class="accent">One Family</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">The Chief Minister's vision of One Entrepreneur Per One Family is the most consequential socio-economic policy target in AP's current governance agenda. APCS is not merely consistent with this vision — it is the only scalable, government-owned digital infrastructure capable of delivering it at statewide scale.</p>
+
+          <h3 class="sub-head">6.1 The Enrollment Architecture (Steps 1–3)</h3>
+          <table class="data-table">
+            <thead>
+              <tr><th>Stage</th><th>Mechanism</th><th>Timeline</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Step 1 — Awareness</td>
+                <td>District-level camps, RBK network, AP Fibernet points, Gram Sachivalayam offices used as enrolment touchpoints</td>
+                <td>Months 1–6</td>
+              </tr>
+              <tr>
+                <td>Step 2 — Registration</td>
+                <td>Aadhaar + mobile number registration on APCS. Family head designates the entrepreneur member. Zero documentation burden at this step.</td>
+                <td>Day 1</td>
+              </tr>
+              <tr>
+                <td>Step 3 — Category Selection</td>
+                <td>Registered entrepreneur selects their vertical: food, service, product, agri, etc. APCS prompts for applicable certifications and licences.</td>
+                <td>Day 1–7</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 16</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 6 — CM యొక్క దృష్టి</span>
+          <h2 class="sec-title">ఒక కుటుంబం ఒక <span class="accent">వ్యవస్థాపకుడు</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">ఒక కుటుంబం-ఒక వ్యవస్థాపకుడు అనే ముఖ్యమంత్రి దృష్టి AP యొక్క ప్రస్తుత పాలన అజెండాలో అత్యంత ముఖ్యమైన సామాజిక-ఆర్థిక విధాన లక్ష్యం. APCS ఈ దృష్టికి అనుగుణంగా ఉండటమే కాదు — రాష్ట్ర స్థాయి స్కేల్‌లో దాన్ని అమలు చేయగల ఏకైక స్కేలబుల్, ప్రభుత్వ-యాజమాన్య డిజిటల్ మౌలిక సదుపాయం.</p>
+
+          <h3 class="sub-head">6.1 నమోదు నిర్మాణం (దశలు 1–3)</h3>
+          <table class="data-table">
+            <thead>
+              <tr><th>దశ</th><th>విధానం</th><th>సమయం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>దశ 1 — అవగాహన</td>
+                <td>జిల్లా-స్థాయి శిబిరాలు, RBK నెట్‌వర్క్, AP ఫైబర్‌నెట్ పాయింట్లు, గ్రామ సచివాలయ కార్యాలయాలు నమోదు టచ్‌పాయింట్‌లుగా ఉపయోగించబడతాయి</td>
+                <td>నెలలు 1–6</td>
+              </tr>
+              <tr>
+                <td>దశ 2 — నమోదు</td>
+                <td>APCS లో ఆధార్ + మొబైల్ నంబర్ నమోదు. కుటుంబ పెద్ద వ్యవస్థాపకుడు సభ్యుడిని నామినేట్ చేస్తారు. ఈ దశలో సున్నా పత్రాల భారం.</td>
+                <td>రోజు 1</td>
+              </tr>
+              <tr>
+                <td>దశ 3 — కేటగిరీ ఎంపిక</td>
+                <td>నమోదైన వ్యవస్థాపకుడు తమ వర్టికల్ ఎంచుకుంటారు: ఆహారం, సేవ, ఉత్పత్తి, వ్యవసాయం మొదలైనవి. APCS వర్తించే సర్టిఫికేషన్లు మరియు లైసెన్సులకు ప్రాంప్ట్ చేస్తుంది.</td>
+                <td>రోజు 1–7</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 16</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 26 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 27 — 6.1 Steps 4–8 (remaining)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 6.1 — Enrollment Architecture (continued)</span>
+          <h2 class="sec-title">Enrollment Steps <span class="accent">4 to 8</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Stage</th><th>Mechanism</th><th>Timeline</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Step 4 — Compliance Scaffolding</td>
+                <td>APCS auto-generates GST registration application, FSSAI application (for food), and MSME Udyam registration. Government officers receive auto-routed applications.</td>
+                <td>Day 1–30</td>
+              </tr>
+              <tr>
+                <td>Step 5 — Commerce Activation</td>
+                <td>Entrepreneur's product or service is live on APCS and visible on the ONDC national network. First order eligible within 24–48 hours of listing approval.</td>
+                <td>Day 7–30</td>
+              </tr>
+              <tr>
+                <td>Step 6 — Upskilling</td>
+                <td>In-app Telugu-language training modules on pricing, quality standards, customer service, and digital finance — mandatory for Growth tier, recommended for all.</td>
+                <td>Ongoing</td>
+              </tr>
+              <tr>
+                <td>Step 7 — Credit Bridge</td>
+                <td>After 90 days of active selling, APCS generates a Transaction Certificate usable as income proof for credit applications at partner banks and NBFCs.</td>
+                <td>Month 3 onward</td>
+              </tr>
+              <tr>
+                <td>Step 8 — Recognition</td>
+                <td>CM Dashboard tracks One-Entrepreneur-Per-Family KPIs district-wise. Top performers featured on Brand Andhra portal and in government communications.</td>
+                <td>Ongoing</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 16–17</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 6.1 — నమోదు నిర్మాణం (కొనసాగింపు)</span>
+          <h2 class="sec-title">నమోదు దశలు <span class="accent">4 నుండి 8</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>దశ</th><th>విధానం</th><th>సమయం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>దశ 4 — సమ్మతి స్కాఫోల్డింగ్</td>
+                <td>APCS GST నమోదు దరఖాస్తు, FSSAI దరఖాస్తు (ఆహారానికి), మరియు MSME ఉద్యమ్ నమోదును స్వయంచాలకంగా రూపొందిస్తుంది. ప్రభుత్వ అధికారులు స్వయంచాలకంగా రూట్ చేయబడిన దరఖాస్తులు అందుకుంటారు.</td>
+                <td>రోజు 1–30</td>
+              </tr>
+              <tr>
+                <td>దశ 5 — వాణిజ్య సక్రియత</td>
+                <td>వ్యవస్థాపకుడి ఉత్పత్తి లేదా సేవ APCS లో లైవ్ అయి ONDC జాతీయ నెట్‌వర్క్‌లో కనిపిస్తుంది. జాబితా ఆమోదం తర్వాత 24–48 గంటల్లో మొదటి ఆర్డర్‌కు అర్హత.</td>
+                <td>రోజు 7–30</td>
+              </tr>
+              <tr>
+                <td>దశ 6 — నైపుణ్య అభివృద్ధి</td>
+                <td>ధర నిర్ణయం, నాణ్యత ప్రమాణాలు, కస్టమర్ సేవ, మరియు డిజిటల్ ఫైనాన్స్‌పై యాప్-లో తెలుగు-భాషా శిక్షణ మాడ్యూళ్ళు — గ్రోత్ టైర్‌కు తప్పనిసరి, అందరికీ సిఫారసు.</td>
+                <td>నిరంతరం</td>
+              </tr>
+              <tr>
+                <td>దశ 7 — క్రెడిట్ వంతెన</td>
+                <td>90 రోజుల క్రియాశీల విక్రయం తర్వాత, APCS భాగస్వామ్య బ్యాంకులు మరియు NBFCలలో క్రెడిట్ దరఖాస్తులకు ఆదాయ రుజువుగా ఉపయోగించగల లావాదేవీ సర్టిఫికెట్ జారీ చేస్తుంది.</td>
+                <td>3వ నెల నుండి</td>
+              </tr>
+              <tr>
+                <td>దశ 8 — గుర్తింపు</td>
+                <td>CM డ్యాష్‌బోర్డ్ జిల్లా వారీగా ఒక కుటుంబం-ఒక వ్యవస్థాపకుడు KPIలను ట్రాక్ చేస్తుంది. అగ్రశ్రేణి నిర్వాహకులు బ్రాండ్ ఆంధ్ర పోర్టల్‌లో మరియు ప్రభుత్వ కమ్యూనికేషన్‌లలో ప్రదర్శించబడతారు.</td>
+                <td>నిరంతరం</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 16–17</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 27 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 28 — 6.2 District Rollout + 6.3 Priority Cohorts
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 6.2 &amp; 6.3 — CM's Vision Delivery</span>
+          <h2 class="sec-title">District Targets &amp; <span class="accent">Priority Cohorts</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">6.2 District-Wise Rollout Targets</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Phase 1 (Months 1–6):</strong> Pilot in 3 districts — target 10,000 entrepreneur registrations</span></li>
+            <li><span class="arr">▸</span><span><strong>Phase 2 (Months 7–18):</strong> Statewide rollout across 26 districts — target 1,00,000 active entrepreneurs</span></li>
+            <li><span class="arr">▸</span><span><strong>Phase 3 (Months 19–36):</strong> Consolidation and deepening — target 5,00,000 families with at least one active digital commerce earning member</span></li>
+          </ul>
+          <p class="body-text" style="font-size:0.95rem;color:#6b7280;margin-top:-10px;"><em>Active definition: An entrepreneur who has completed at least one commerce transaction through APCS in the preceding 30 days.</em></p>
+
+          <h3 class="sub-head" style="margin-top:24px;">6.3 Priority Cohorts for CM Vision Delivery</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Women SHG members:</strong> Food, handloom, and craft verticals; government targets women-led households as first beneficiaries</span></li>
+            <li><span class="arr">▸</span><span><strong>SC/ST artisans &amp; traditional craft families:</strong> Brand Andhra GI vertical; preferential listing fees and priority on-boarding support</span></li>
+            <li><span class="arr">▸</span><span><strong>Differently-abled entrepreneurs:</strong> Dedicated on-boarding assistance; My Services includes accessibility-compatible service categories</span></li>
+            <li><span class="arr">▸</span><span><strong>Rural youth (18–30):</strong> Agri, My Services, and My Products verticals; APSSDC skill certification fast-tracked</span></li>
+            <li><span class="arr">▸</span><span><strong>Migrant returnee workers:</strong> Ready on-boarding to My Services and food verticals upon return to AP; APCS as re-integration tool for the AP economy</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 17</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 6.2 &amp; 6.3 — CM దృష్టి అమలు</span>
+          <h2 class="sec-title">జిల్లా లక్ష్యాలు &amp; <span class="accent">ప్రాధాన్యత సమూహాలు</span></h2>
+          <div class="sec-divider"></div>
+
+          <h3 class="sub-head">6.2 జిల్లా వారీ రోల్‌అవుట్ లక్ష్యాలు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>దశ 1 (నెలలు 1–6):</strong> 3 జిల్లాలలో పైలట్ — 10,000 వ్యవస్థాపకుల నమోదు లక్ష్యం</span></li>
+            <li><span class="arr">▸</span><span><strong>దశ 2 (నెలలు 7–18):</strong> 26 జిల్లాలలో రాష్ట్రవ్యాప్త రోల్‌అవుట్ — 1,00,000 క్రియాశీల వ్యవస్థాపకుల లక్ష్యం</span></li>
+            <li><span class="arr">▸</span><span><strong>దశ 3 (నెలలు 19–36):</strong> ఏకీకరణ మరియు లోతుగా చేయడం — కనీసం ఒక క్రియాశీల డిజిటల్ వాణిజ్య ఆదాయ సభ్యుడు ఉన్న 5,00,000 కుటుంబాల లక్ష్యం</span></li>
+          </ul>
+          <p class="body-text" style="font-size:0.95rem;color:#6b7280;margin-top:-10px;"><em>క్రియాశీల నిర్వచనం: గత 30 రోజులలో APCS ద్వారా కనీసం ఒక వాణిజ్య లావాదేవీ పూర్తి చేసిన వ్యవస్థాపకుడు.</em></p>
+
+          <h3 class="sub-head" style="margin-top:24px;">6.3 CM దృష్టి అమలు కోసం ప్రాధాన్యత సమూహాలు</h3>
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>మహిళా SHG సభ్యులు:</strong> ఆహారం, చేనేత, మరియు చేతివృత్తి వర్టికల్‌లు; ప్రభుత్వం మహిళా నేతృత్వ గృహాలను మొదటి లబ్ధిదారులుగా లక్ష్యంగా చేసుకుంటుంది</span></li>
+            <li><span class="arr">▸</span><span><strong>SC/ST చేతివృత్తిదారులు &amp; సాంప్రదాయ చేతివృత్తి కుటుంబాలు:</strong> బ్రాండ్ ఆంధ్ర GI వర్టికల్; ప్రాధాన్యత జాబితా రుసుములు మరియు ప్రాధాన్యత నమోదు మద్దతు</span></li>
+            <li><span class="arr">▸</span><span><strong>వికలాంగ వ్యవస్థాపకులు:</strong> నిర్దేశిత నమోదు సహాయం; నా సేవలు యాక్సెసిబిలిటీ-అనుకూల సేవా కేటగిరీలను కలిగి ఉంటుంది</span></li>
+            <li><span class="arr">▸</span><span><strong>గ్రామీణ యువత (18–30):</strong> వ్యవసాయం, నా సేవలు, మరియు నా ఉత్పత్తులు వర్టికల్‌లు; APSSDC నైపుణ్య సర్టిఫికేషన్ వేగంగా ట్రాక్ చేయబడుతుంది</span></li>
+            <li><span class="arr">▸</span><span><strong>వలస తిరిగి వచ్చిన కార్మికులు:</strong> AP కి తిరిగి వచ్చిన తర్వాత నా సేవలు మరియు ఆహారం వర్టికల్‌లకు సిద్ధంగా నమోదు; AP ఆర్థిక వ్యవస్థలో పున:సమీకరణ సాధనంగా APCS</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 17</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 28 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 29 — Section 7 intro + EoDB rows 1–4
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 7 — Ease of Doing Business</span>
+          <h2 class="sec-title">APCS as State <span class="accent">Policy Infrastructure</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Andhra Pradesh's standing on national Ease of Doing Business (EoDB) rankings is a strategic priority for the state government. APCS directly improves EoDB metrics across multiple dimensions by reducing friction, eliminating intermediaries, automating compliance, and creating transparent price discovery.</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>EoDB Dimension</th><th>APCS Impact</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Business Registration</td>
+                <td>Aadhaar-linked APCS registration auto-initiates MSME Udyam, GST, and FSSAI applications — one registration triggers multiple government processes simultaneously</td>
+              </tr>
+              <tr>
+                <td>Licences &amp; Permits</td>
+                <td>APCS flags required licences per seller category and auto-routes applications to relevant departments — reduces manual follow-up burden on the entrepreneur</td>
+              </tr>
+              <tr>
+                <td>Tax Compliance</td>
+                <td>GST invoice auto-generation, GSTR-1 auto-population, e-way bill auto-generation — compliance burden reduced to near-zero for APCS sellers</td>
+              </tr>
+              <tr>
+                <td>Access to Markets</td>
+                <td>From Day 1, the APCS seller is visible on the ONDC national network — buyers across India can transact without the seller attending a trade fair or distributor meeting</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 18</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 7 — వ్యాపారం చేయడంలో సౌలభ్యం</span>
+          <h2 class="sec-title">APCS రాష్ట్ర <span class="accent">విధాన మౌలిక సదుపాయంగా</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">జాతీయ వ్యాపారం చేయడంలో సౌలభ్యం (EoDB) ర్యాంకింగ్‌లలో ఆంధ్రప్రదేశ్ స్థానం రాష్ట్ర ప్రభుత్వానికి వ్యూహాత్మక ప్రాధాన్యత. APCS అడ్డంకులను తగ్గించడం, మధ్యవర్తులను తొలగించడం, సమ్మతిని స్వయంచాలకం చేయడం మరియు పారదర్శకమైన ధర ఆవిష్కరణను సృష్టించడం ద్వారా బహుళ కోణాలలో EoDB మెట్రిక్స్‌ను నేరుగా మెరుగుపరుస్తుంది.</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>EoDB కోణం</th><th>APCS ప్రభావం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>వ్యాపార నమోదు</td>
+                <td>ఆధార్-అనుసంధానిత APCS నమోదు MSME ఉద్యమ్, GST, మరియు FSSAI దరఖాస్తులను స్వయంచాలకంగా ప్రారంభిస్తుంది — ఒక నమోదు బహుళ ప్రభుత్వ ప్రక్రియలను ఏకకాలంలో ట్రిగ్గర్ చేస్తుంది</td>
+              </tr>
+              <tr>
+                <td>లైసెన్సులు &amp; అనుమతులు</td>
+                <td>APCS విక్రేత కేటగిరీ వారీగా అవసరమైన లైసెన్సులను ఫ్లాగ్ చేసి సంబంధిత విభాగాలకు దరఖాస్తులను స్వయంచాలకంగా రూట్ చేస్తుంది — వ్యవస్థాపకుడిపై మానవ ఫాలో-అప్ భారం తగ్గుతుంది</td>
+              </tr>
+              <tr>
+                <td>పన్ను సమ్మతి</td>
+                <td>GST ఇన్వాయిస్ స్వయంచాలక తయారీ, GSTR-1 స్వయంచాలక నింపడం, ఇ-వే బిల్ స్వయంచాలక తయారీ — APCS విక్రేతలకు సమ్మతి భారం దాదాపు సున్నాకి తగ్గింది</td>
+              </tr>
+              <tr>
+                <td>మార్కెట్లకు ప్రాప్యత</td>
+                <td>రోజు 1 నుండే, APCS విక్రేత ONDC జాతీయ నెట్‌వర్క్‌లో కనిపిస్తారు — భారతదేశమంతటా కొనుగోలుదారులు విక్రేత వ్యాపార ప్రదర్శనికి హాజరవకుండా లావాదేవీ చేయవచ్చు</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 18</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 29 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 30 — EoDB rows 5–8 (remaining)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 7 — Ease of Doing Business (continued)</span>
+          <h2 class="sec-title">EoDB Impact — <span class="accent">Continued</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>EoDB Dimension</th><th>APCS Impact</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Access to Finance</td>
+                <td>APCS transaction ledger serves as verifiable income history — banks and NBFCs can assess creditworthiness of micro-entrepreneurs previously invisible to formal credit</td>
+              </tr>
+              <tr>
+                <td>Dispute Resolution</td>
+                <td>APCS operates binding arbitration for buyer-seller disputes — time-bound, digital, Telugu-language — replacing slow civil court processes for commerce disputes</td>
+              </tr>
+              <tr>
+                <td>Infrastructure</td>
+                <td>AP Fibernet + APCS = last-mile digital commerce infrastructure for rural sellers, eliminating the need for physical market access</td>
+              </tr>
+              <tr>
+                <td>Contract Enforcement</td>
+                <td>Digital contracts on APCS for agri and MSME transactions are time-stamped and legally valid under the IT Act, reducing contract enforcement risk for sellers</td>
+              </tr>
+              <tr>
+                <td>Business Wind-down</td>
+                <td>APCS account deactivation is a fully digital process — no physical formality required for a micro-entrepreneur to pause or close their commerce activity</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 18–19</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 7 — వ్యాపారం చేయడంలో సౌలభ్యం (కొనసాగింపు)</span>
+          <h2 class="sec-title">EoDB ప్రభావం — <span class="accent">కొనసాగింపు</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>EoDB కోణం</th><th>APCS ప్రభావం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ఆర్థిక సహాయానికి ప్రాప్యత</td>
+                <td>APCS లావాదేవీ లెడ్జర్ ధృవీకరించదగిన ఆదాయ చరిత్రగా పని చేస్తుంది — బ్యాంకులు మరియు NBFCలు గతంలో అధికారిక క్రెడిట్‌కు అదృశ్యంగా ఉన్న సూక్ష్మ వ్యవస్థాపకుల క్రెడిట్ యోగ్యతను అంచనా వేయవచ్చు</td>
+              </tr>
+              <tr>
+                <td>వివాద పరిష్కారం</td>
+                <td>APCS కొనుగోలుదారు-విక్రేత వివాదాలకు బంధించే మధ్యవర్తిత్వాన్ని నిర్వహిస్తుంది — సమయ-బద్ధ, డిజిటల్, తెలుగు-భాష — వాణిజ్య వివాదాలకు మందకొడి న్యాయస్థాన ప్రక్రియలను భర్తీ చేస్తుంది</td>
+              </tr>
+              <tr>
+                <td>మౌలిక సదుపాయాలు</td>
+                <td>AP ఫైబర్‌నెట్ + APCS = గ్రామీణ విక్రేతలకు చివరి-మైలు డిజిటల్ వాణిజ్య మౌలిక సదుపాయాలు, భౌతిక మార్కెట్ ప్రాప్యత అవసరాన్ని తొలగిస్తాయి</td>
+              </tr>
+              <tr>
+                <td>ఒప్పంద అమలు</td>
+                <td>వ్యవసాయం మరియు MSME లావాదేవీలకు APCS లో డిజిటల్ ఒప్పందాలు టైమ్-స్టాంప్ చేయబడి IT చట్టం కింద చట్టబద్ధంగా చెల్లుబాటవుతాయి, విక్రేతలకు ఒప్పంద అమలు రిస్క్‌ను తగ్గిస్తాయి</td>
+              </tr>
+              <tr>
+                <td>వ్యాపార ముగింపు</td>
+                <td>APCS ఖాతా నిష్క్రియం పూర్తి డిజిటల్ ప్రక్రియ — సూక్ష్మ వ్యవస్థాపకుడు తమ వాణిజ్య కార్యాచరణను నిలిపివేయడానికి లేదా మూసివేయడానికి భౌతిక అధికారికత అవసరం లేదు</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 18–19</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 30 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 31 — Section 8 Intro + Phase 1
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 8 — Implementation Roadmap</span>
+          <h2 class="sec-title">Phase 1: <span class="accent">Foundation (Months 1–6)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Milestone</th><th>Description</th><th>Target Month</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>MoU Execution</td>
+                <td>GoAP–Zian Technologies MoU signed; APCS entity registered as ONDC Network Participant; APEITA empanelment completed</td>
+                <td>Month 1</td>
+              </tr>
+              <tr>
+                <td>APCS Governing Council</td>
+                <td>Formation of joint technical and policy committee with IT&C, Commerce, and MSME department representatives; Zian CEO as Nodal Agency Head</td>
+                <td>Month 1</td>
+              </tr>
+              <tr>
+                <td>Platform Development — Core</td>
+                <td>APCS buyer app, seller app, payment layer, and ONDC integration developed and tested; Telugu-language UX completed</td>
+                <td>Months 1–4</td>
+              </tr>
+              <tr>
+                <td>Brand Andhra GI Registry</td>
+                <td>Launched with first 25 certified GI products; government-designated certification authority operational</td>
+                <td>Month 3</td>
+              </tr>
+              <tr>
+                <td>Pilot Launch</td>
+                <td>3-district live pilot: food delivery, grocery, and My Services verticals; initial seller onboarding camps</td>
+                <td>Months 5–6</td>
+              </tr>
+              <tr>
+                <td>Advertising Marketplace Beta</td>
+                <td>First 100 sponsors onboarded; sponsored listing product live; first advertising revenue to government</td>
+                <td>Month 6</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 20</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 8 — అమలు రోడ్‌మ్యాప్</span>
+          <h2 class="sec-title">దశ 1: <span class="accent">పునాది (నెలలు 1–6)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>మైలురాయి</th><th>వివరణ</th><th>లక్ష్య నెల</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>MoU అమలు</td>
+                <td>GoAP–Zian Technologies MoU సంతకం; APCS సంస్థ ONDC నెట్‌వర్క్ పార్టిసిపెంట్‌గా నమోదు; APEITA ఎంపానెల్‌మెంట్ పూర్తి</td>
+                <td>నెల 1</td>
+              </tr>
+              <tr>
+                <td>APCS గవర్నింగ్ కౌన్సిల్</td>
+                <td>IT&C, వాణిజ్యం, మరియు MSME విభాగ ప్రతినిధులతో సంయుక్త సాంకేతిక మరియు విధాన కమిటీ ఏర్పాటు; Zian CEO నోడల్ ఏజెన్సీ హెడ్‌గా</td>
+                <td>నెల 1</td>
+              </tr>
+              <tr>
+                <td>వేదిక అభివృద్ధి — కోర్</td>
+                <td>APCS కొనుగోలుదారు యాప్, విక్రేత యాప్, చెల్లింపు లేయర్, మరియు ONDC ఏకీకరణ అభివృద్ధి మరియు పరీక్ష; తెలుగు-భాషా UX పూర్తి</td>
+                <td>నెలలు 1–4</td>
+              </tr>
+              <tr>
+                <td>బ్రాండ్ ఆంధ్ర GI రిజిస్ట్రీ</td>
+                <td>మొదటి 25 సర్టిఫైడ్ GI ఉత్పత్తులతో ప్రారంభం; ప్రభుత్వ-నిర్దేశిత సర్టిఫికేషన్ అధికారం కార్యాచరణలో</td>
+                <td>నెల 3</td>
+              </tr>
+              <tr>
+                <td>పైలట్ లాంచ్</td>
+                <td>3-జిల్లాల లైవ్ పైలట్: ఆహారం డెలివరీ, కిరాణా, మరియు నా సేవలు వర్టికల్‌లు; ప్రారంభ విక్రేత నమోదు శిబిరాలు</td>
+                <td>నెలలు 5–6</td>
+              </tr>
+              <tr>
+                <td>ప్రకటనల మార్కెట్‌ప్లేస్ బీటా</td>
+                <td>మొదటి 100 స్పాన్సర్లు నమోదు; స్పాన్సర్డ్ జాబితా ఉత్పత్తి లైవ్; ప్రభుత్వానికి మొదటి ప్రకటన ఆదాయం</td>
+                <td>నెల 6</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 20</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 31 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 32 — Phase 2: Scale (Months 7–18)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 8 — Implementation Roadmap</span>
+          <h2 class="sec-title">Phase 2: <span class="accent">Scale (Months 7–18)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Milestone</th><th>Description</th><th>Target Month</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Statewide Rollout</td>
+                <td>All 26 districts covered; all 8 commerce verticals live; district-level seller onboarding camps completed</td>
+                <td>Month 12</td>
+              </tr>
+              <tr>
+                <td>Ticket Booking Module</td>
+                <td>AP ticketing layer live: cinema, events, tourism, government facility booking; first ticketing revenue to state</td>
+                <td>Month 8</td>
+              </tr>
+              <tr>
+                <td>MSME &amp; Agri Marketplace</td>
+                <td>B2B MSME discovery portal and agri direct commerce modules deployed; RBK network integration for farmer onboarding</td>
+                <td>Month 10</td>
+              </tr>
+              <tr>
+                <td>GST Compliance Layer</td>
+                <td>Automated invoice and GSTR-1 module live; revenue from compliance subscription begins</td>
+                <td>Month 9</td>
+              </tr>
+              <tr>
+                <td>1,00,000 Entrepreneurs</td>
+                <td>One-Entrepreneur-Per-Family: 1 lakh active sellers across 26 districts; CM Dashboard live with real-time KPIs</td>
+                <td>Month 18</td>
+              </tr>
+              <tr>
+                <td>Revenue Audit — Year 1</td>
+                <td>First annual CAG-empanelled revenue audit; results submitted to state legislature</td>
+                <td>Month 18</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 21</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 8 — అమలు రోడ్‌మ్యాప్</span>
+          <h2 class="sec-title">దశ 2: <span class="accent">స్కేల్ (నెలలు 7–18)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>మైలురాయి</th><th>వివరణ</th><th>లక్ష్య నెల</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>రాష్ట్రవ్యాప్త రోల్‌అవుట్</td>
+                <td>26 జిల్లాలు కవర్; అన్ని 8 వాణిజ్య వర్టికల్‌లు లైవ్; జిల్లా-స్థాయి విక్రేత నమోదు శిబిరాలు పూర్తి</td>
+                <td>నెల 12</td>
+              </tr>
+              <tr>
+                <td>టిక్కెట్ బుకింగ్ మాడ్యూల్</td>
+                <td>AP టిక్కెటింగ్ లేయర్ లైవ్: సినిమా, ఈవెంట్‌లు, పర్యాటకం, ప్రభుత్వ సదుపాయం బుకింగ్; రాష్ట్రానికి మొదటి టిక్కెటింగ్ ఆదాయం</td>
+                <td>నెల 8</td>
+              </tr>
+              <tr>
+                <td>MSME &amp; వ్యవసాయ మార్కెట్‌ప్లేస్</td>
+                <td>B2B MSME ఆవిష్కరణ పోర్టల్ మరియు వ్యవసాయ ప్రత్యక్ష వాణిజ్య మాడ్యూళ్ళు అమలు; రైతు నమోదు కోసం RBK నెట్‌వర్క్ ఏకీకరణ</td>
+                <td>నెల 10</td>
+              </tr>
+              <tr>
+                <td>GST సమ్మతి లేయర్</td>
+                <td>స్వయంచాలక ఇన్వాయిస్ మరియు GSTR-1 మాడ్యూల్ లైవ్; సమ్మతి సభ్యత్వం నుండి ఆదాయం ప్రారంభం</td>
+                <td>నెల 9</td>
+              </tr>
+              <tr>
+                <td>1,00,000 వ్యవస్థాపకులు</td>
+                <td>ఒక కుటుంబం-ఒక వ్యవస్థాపకుడు: 26 జిల్లాలలో 1 లక్ష క్రియాశీల విక్రేతలు; నిజ-సమయ KPIలతో CM డ్యాష్‌బోర్డ్ లైవ్</td>
+                <td>నెల 18</td>
+              </tr>
+              <tr>
+                <td>ఆదాయ తనిఖీ — సంవత్సరం 1</td>
+                <td>మొదటి వార్షిక CAG-ఎంపానెల్డ్ ఆదాయ తనిఖీ; ఫలితాలు రాష్ట్ర శాసనసభకు సమర్పణ</td>
+                <td>నెల 18</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 21</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 32 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 33 — Phase 3: Optimisation & Export (Months 19–36)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 8 — Implementation Roadmap</span>
+          <h2 class="sec-title">Phase 3: <span class="accent">Optimisation &amp; Export (Months 19–36)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Milestone</th><th>Description</th><th>Target Month</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Brand Andhra Export Gateway</td>
+                <td>GI product export module live; international buyers can transact directly on APCS; AP Agri export revenue tracked</td>
+                <td>Month 24</td>
+              </tr>
+              <tr>
+                <td>Government Procurement Module</td>
+                <td>APCS government procurement marketplace integrated with GeM; AP departments begin MSME procurement through APCS</td>
+                <td>Month 22</td>
+              </tr>
+              <tr>
+                <td>Credit Bridge Launch</td>
+                <td>APCS Transaction Certificate protocol live; first batch of partner banks and NBFCs integrated for seller credit</td>
+                <td>Month 24</td>
+              </tr>
+              <tr>
+                <td>5,00,000 Entrepreneurs</td>
+                <td>One-Entrepreneur-Per-Family: 5 lakh active families with commerce earnings through APCS</td>
+                <td>Month 36</td>
+              </tr>
+              <tr>
+                <td>Self-Sustaining Platform</td>
+                <td>APCS operating costs fully covered by platform revenue; net positive revenue remittance to GoAP treasury</td>
+                <td>Month 30</td>
+              </tr>
+              <tr>
+                <td>IP Transfer Review</td>
+                <td>End-of-engagement review: GoAP exercises option on APCS IP ownership; renegotiation or extension of Zian TSP contract</td>
+                <td>Month 36</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 22</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 8 — అమలు రోడ్‌మ్యాప్</span>
+          <h2 class="sec-title">దశ 3: <span class="accent">అనుకూలీకరణ &amp; ఎగుమతి (నెలలు 19–36)</span></h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>మైలురాయి</th><th>వివరణ</th><th>లక్ష్య నెల</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>బ్రాండ్ ఆంధ్ర ఎగుమతి గేట్‌వే</td>
+                <td>GI ఉత్పత్తి ఎగుమతి మాడ్యూల్ లైవ్; అంతర్జాతీయ కొనుగోలుదారులు నేరుగా APCS లో లావాదేవీ చేయవచ్చు; AP వ్యవసాయ ఎగుమతి ఆదాయం ట్రాక్</td>
+                <td>నెల 24</td>
+              </tr>
+              <tr>
+                <td>ప్రభుత్వ సేకరణ మాడ్యూల్</td>
+                <td>APCS ప్రభుత్వ సేకరణ మార్కెట్‌ప్లేస్ GeM తో అనుసంధానం; AP విభాగాలు APCS ద్వారా MSME సేకరణ ప్రారంభం</td>
+                <td>నెల 22</td>
+              </tr>
+              <tr>
+                <td>క్రెడిట్ బ్రిడ్జ్ లాంచ్</td>
+                <td>APCS లావాదేవీ సర్టిఫికెట్ ప్రోటోకాల్ లైవ్; విక్రేత క్రెడిట్ కోసం మొదటి బ్యాచ్ భాగస్వామ్య బ్యాంకులు మరియు NBFCలు ఏకీకరణ</td>
+                <td>నెల 24</td>
+              </tr>
+              <tr>
+                <td>5,00,000 వ్యవస్థాపకులు</td>
+                <td>ఒక కుటుంబం-ఒక వ్యవస్థాపకుడు: APCS ద్వారా వాణిజ్య ఆదాయాలతో 5 లక్షల క్రియాశీల కుటుంబాలు</td>
+                <td>నెల 36</td>
+              </tr>
+              <tr>
+                <td>స్వయం-నిర్వహణ వేదిక</td>
+                <td>APCS నిర్వహణ వ్యయాలు వేదిక ఆదాయంతో పూర్తిగా కవర్; GoAP ఖజానాకు నికర సానుకూల ఆదాయ చెల్లింపు</td>
+                <td>నెల 30</td>
+              </tr>
+              <tr>
+                <td>IP బదిలీ సమీక్ష</td>
+                <td>నిశ్చితార్థ-ముగింపు సమీక్ష: GoAP APCS IP యాజమాన్యంపై ఎంపికను వినియోగిస్తుంది; Zian TSP ఒప్పందం పునఃసంప్రదింపు లేదా పొడిగింపు</td>
+                <td>నెల 36</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 22</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 33 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 34 — 9.1 Governing Council Rows 1–3
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 9 — Governance Framework</span>
+          <h2 class="sec-title">9.1 APCS <span class="accent">Governing Council</span> (1 of 2)</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">The APCS Governing Council is the apex decision-making body for the platform. It meets quarterly and holds authority over policy changes, fee structures, and performance review.</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Council Member</th><th>Role</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Principal Secretary, IT&amp;C (Chair)</td>
+                <td>Policy authority; final approval on fee structure changes</td>
+              </tr>
+              <tr>
+                <td>Principal Secretary, Commerce &amp; Industries</td>
+                <td>Commerce policy oversight; MSME and GI vertical governance</td>
+              </tr>
+              <tr>
+                <td>Principal Secretary, Agriculture &amp; Cooperation</td>
+                <td>Agri vertical policy; RBK integration oversight</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 23</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 9 — పాలన నిర్మాణం</span>
+          <h2 class="sec-title">9.1 APCS <span class="accent">గవర్నింగ్ కౌన్సిల్</span> (1 లో 2)</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">APCS గవర్నింగ్ కౌన్సిల్ వేదిక కోసం అత్యున్నత నిర్ణయ-తీసుకోనే సంస్థ. ఇది త్రైమాసికంగా సమావేశమవుతుంది మరియు విధాన మార్పులు, రుసుము నిర్మాణాలు, మరియు పనితీరు సమీక్షపై అధికారం కలిగి ఉంటుంది.</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>కౌన్సిల్ సభ్యుడు</th><th>పాత్ర</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ప్రధాన కార్యదర్శి, IT&amp;C (అధ్యక్షుడు)</td>
+                <td>విధాన అధికారం; రుసుము నిర్మాణ మార్పులపై తుది ఆమోదం</td>
+              </tr>
+              <tr>
+                <td>ప్రధాన కార్యదర్శి, వాణిజ్యం &amp; పరిశ్రమలు</td>
+                <td>వాణిజ్య విధాన పర్యవేక్షణ; MSME మరియు GI వర్టికల్ పాలన</td>
+              </tr>
+              <tr>
+                <td>ప్రధాన కార్యదర్శి, వ్యవసాయం &amp; సహకారం</td>
+                <td>వ్యవసాయ వర్టికల్ విధానం; RBK ఏకీకరణ పర్యవేక్షణ</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 23</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 34 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 35 — 9.1 Governing Council Rows 4–8
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 9.1 — Governing Council (continued)</span>
+          <h2 class="sec-title">9.1 APCS <span class="accent">Governing Council</span> (2 of 2)</h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Council Member</th><th>Role</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Director, APEITA</td>
+                <td>Vendor compliance and procurement governance</td>
+              </tr>
+              <tr>
+                <td>CEO, Zian Technologies LLP (Nodal Agency Head)</td>
+                <td>Platform performance; revenue reporting; escalation management</td>
+              </tr>
+              <tr>
+                <td>CTO, Zian Technologies LLP (TSP Lead)</td>
+                <td>Technical architecture; SLA compliance; ONDC protocol governance</td>
+              </tr>
+              <tr>
+                <td>Nominee — ONDC Foundation (Observer)</td>
+                <td>Protocol compliance; national network alignment</td>
+              </tr>
+              <tr>
+                <td>Representative — AP MSME Sector (Nominee)</td>
+                <td>MSME vertical oversight; seller welfare representation</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 23</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 9.1 — గవర్నింగ్ కౌన్సిల్ (కొనసాగింపు)</span>
+          <h2 class="sec-title">9.1 APCS <span class="accent">గవర్నింగ్ కౌన్సిల్</span> (2 లో 2)</h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>కౌన్సిల్ సభ్యుడు</th><th>పాత్ర</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>డైరెక్టర్, APEITA</td>
+                <td>వెండర్ సమ్మతి మరియు సేకరణ పాలన</td>
+              </tr>
+              <tr>
+                <td>CEO, Zian Technologies LLP (నోడల్ ఏజెన్సీ హెడ్)</td>
+                <td>వేదిక పనితీరు; ఆదాయ నివేదిక; పెంపు నిర్వహణ</td>
+              </tr>
+              <tr>
+                <td>CTO, Zian Technologies LLP (TSP లీడ్)</td>
+                <td>సాంకేతిక నిర్మాణం; SLA సమ్మతి; ONDC ప్రోటోకాల్ పాలన</td>
+              </tr>
+              <tr>
+                <td>నామినీ — ONDC ఫౌండేషన్ (పరిశీలకుడు)</td>
+                <td>ప్రోటోకాల్ సమ్మతి; జాతీయ నెట్‌వర్క్ సమలేఖనం</td>
+              </tr>
+              <tr>
+                <td>ప్రతినిధి — AP MSME రంగం (నామినీ)</td>
+                <td>MSME వర్టికల్ పర్యవేక్షణ; విక్రేత సంక్షేమ ప్రాతినిధ్యం</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 23</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 35 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 36 — 9.2 Reporting Structure
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 9.2 — Governance Framework</span>
+          <h2 class="sec-title">9.2 Reporting <span class="accent">Structure</span></h2>
+          <div class="sec-divider"></div>
+
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>Monthly:</strong> Zian submits platform performance and revenue remittance report to Principal Secretary IT&amp;C</span></li>
+            <li><span class="arr">▸</span><span><strong>Quarterly:</strong> Full APCS Governing Council review — performance, revenue, entrepreneur KPIs, and escalations</span></li>
+            <li><span class="arr">▸</span><span><strong>Annually:</strong> CAG-empanelled audit; report tabled with state legislature alongside IT&amp;C department annual report</span></li>
+            <li><span class="arr">▸</span><span><strong>Ad-hoc:</strong> Any cybersecurity incident, platform downtime exceeding 4 hours, or revenue discrepancy triggers immediate notification to Principal Secretary IT&amp;C and initiation of government investigation protocol</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 23–24</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 9.2 — పాలన నిర్మాణం</span>
+          <h2 class="sec-title">9.2 నివేదిక <span class="accent">నిర్మాణం</span></h2>
+          <div class="sec-divider"></div>
+
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span><strong>నెలవారీ:</strong> Zian వేదిక పనితీరు మరియు ఆదాయ చెల్లింపు నివేదికను ప్రధాన కార్యదర్శి IT&amp;C కి సమర్పిస్తుంది</span></li>
+            <li><span class="arr">▸</span><span><strong>త్రైమాసికం:</strong> పూర్తి APCS గవర్నింగ్ కౌన్సిల్ సమీక్ష — పనితీరు, ఆదాయం, వ్యవస్థాపకుల KPIలు, మరియు పెంపులు</span></li>
+            <li><span class="arr">▸</span><span><strong>వార్షికం:</strong> CAG-ఎంపానెల్డ్ తనిఖీ; IT&amp;C విభాగ వార్షిక నివేదికతో పాటు రాష్ట్ర శాసనసభలో నివేదిక సమర్పణ</span></li>
+            <li><span class="arr">▸</span><span><strong>తక్షణ (Ad-hoc):</strong> ఏదైనా సైబర్‌సెక్యూరిటీ సంఘటన, 4 గంటలు మించి వేదిక డౌన్‌టైమ్, లేదా ఆదాయ వ్యత్యాసం ప్రధాన కార్యదర్శి IT&amp;C కి తక్షణ నోటిఫికేషన్ మరియు ప్రభుత్వ దర్యాప్తు ప్రోటోకాల్‌ను ప్రారంభిస్తుంది</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 23–24</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 36 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 37 — 9.3 IP Ownership & Exit Provisions
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 9.3 — Governance Framework</span>
+          <h2 class="sec-title">9.3 IP Ownership &amp; <span class="accent">Exit Provisions</span></h2>
+          <div class="sec-divider"></div>
+
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>All platform IP developed specifically for APCS is owned by <strong>Government of Andhra Pradesh</strong></span></li>
+            <li><span class="arr">▸</span><span>Zian Technologies retains rights to its pre-existing technology components and proprietary tools used in TSP capacity, subject to government audit</span></li>
+            <li><span class="arr">▸</span><span>At 36-month engagement end, GoAP exercises one of: <strong>(a)</strong> extension of Zian TSP contract, <strong>(b)</strong> IP transfer to state IT agency for independent operation, or <strong>(c)</strong> competitive re-procurement</span></li>
+            <li><span class="arr">▸</span><span><strong>Full data portability guaranteed:</strong> GoAP can export all APCS data in standard formats at any time with 30-day notice to Zian</span></li>
+            <li><span class="arr">▸</span><span>Zian commits to a <strong>6-month handover period</strong> in any exit scenario — ensuring uninterrupted platform operation</span></li>
+          </ul>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 24</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 9.3 — పాలన నిర్మాణం</span>
+          <h2 class="sec-title">9.3 IP యాజమాన్యం &amp; <span class="accent">నిష్క్రమణ నిబంధనలు</span></h2>
+          <div class="sec-divider"></div>
+
+          <ul class="bullet-list">
+            <li><span class="arr">▸</span><span>APCS కోసం ప్రత్యేకంగా అభివృద్ధి చేయబడిన అన్ని వేదిక IP <strong>ఆంధ్రప్రదేశ్ ప్రభుత్వానికి</strong> స్వంతం</span></li>
+            <li><span class="arr">▸</span><span>Zian Technologies TSP సామర్థ్యంలో ఉపయోగించిన దాని ముందే-ఉన్న సాంకేతిక భాగాలు మరియు యాజమాన్య సాధనాలపై హక్కులు నిలుపుకుంటుంది, ప్రభుత్వ తనిఖీకి లోబడి</span></li>
+            <li><span class="arr">▸</span><span>36-నెల నిశ్చితార్థం ముగిసిన తర్వాత, GoAP ఒకటి ఎంచుకుంటుంది: <strong>(a)</strong> Zian TSP ఒప్పందం పొడిగింపు, <strong>(b)</strong> స్వతంత్ర నిర్వహణ కోసం రాష్ట్ర IT ఏజెన్సీకి IP బదిలీ, లేదా <strong>(c)</strong> పోటీ పున:సేకరణ</span></li>
+            <li><span class="arr">▸</span><span><strong>పూర్తి డేటా పోర్టబిలిటీ హామీ:</strong> GoAP Zian కి 30-రోజుల నోటీసుతో ఎప్పుడైనా ప్రామాణిక ఫార్మాట్‌లలో అన్ని APCS డేటాను ఎగుమతి చేయవచ్చు</span></li>
+            <li><span class="arr">▸</span><span>Zian ఏదైనా నిష్క్రమణ దృష్టాంతంలో <strong>6-నెల హ్యాండోవర్ కాలానికి</strong> నిబద్ధత — నిరంతర వేదిక నిర్వహణ నిర్ధారించడం</span></li>
+          </ul>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 24</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 37 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 38 — Section 10 Policy Alignment (Rows 1–4)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 10 — Policy Alignment</span>
+          <h2 class="sec-title">National &amp; State <span class="accent">Policy Alignment</span> (1 of 2)</h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Policy / Scheme</th><th>APCS Alignment</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Digital India Mission (MeitY)</td>
+                <td>APCS is direct implementation infrastructure for Digital India's commerce digitization mandate — Government of India alignment at the Central level</td>
+              </tr>
+              <tr>
+                <td>ONDC National Expansion Policy (DPIIT)</td>
+                <td>APCS registers GoAP as a Network Participant — directly fulfilling DPIIT's stated priority of state government participation on ONDC</td>
+              </tr>
+              <tr>
+                <td>PM GatiShakti National Master Plan</td>
+                <td>APCS logistics integration and district-level commerce connectivity directly supports GatiShakti's last-mile commerce objective</td>
+              </tr>
+              <tr>
+                <td>One District One Product (ODOP)</td>
+                <td>Brand Andhra GI vertical operationalizes ODOP for all AP districts — GI-tagged district products get authenticated digital storefronts</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 25</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 10 — విధాన సమలేఖనం</span>
+          <h2 class="sec-title">జాతీయ &amp; రాష్ట్ర <span class="accent">విధాన సమలేఖనం</span> (1 లో 2)</h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>విధానం / పథకం</th><th>APCS సమలేఖనం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>డిజిటల్ ఇండియా మిషన్ (MeitY)</td>
+                <td>APCS డిజిటల్ ఇండియా వాణిజ్య డిజిటైజేషన్ ఆదేశానికి ప్రత్యక్ష అమలు మౌలిక సదుపాయం — కేంద్ర స్థాయిలో భారత ప్రభుత్వ సమలేఖనం</td>
+              </tr>
+              <tr>
+                <td>ONDC జాతీయ విస్తరణ విధానం (DPIIT)</td>
+                <td>APCS GoAP ను నెట్‌వర్క్ పార్టిసిపెంట్‌గా నమోదు చేస్తుంది — ONDC లో రాష్ట్ర ప్రభుత్వ భాగస్వామ్యం DPIIT యొక్క పేర్కొన్న ప్రాధాన్యతను నేరుగా నెరవేరుస్తుంది</td>
+              </tr>
+              <tr>
+                <td>PM గతిశక్తి జాతీయ మాస్టర్ ప్లాన్</td>
+                <td>APCS లాజిస్టిక్స్ ఏకీకరణ మరియు జిల్లా-స్థాయి వాణిజ్య కనెక్టివిటీ గతిశక్తి యొక్క చివరి-మైలు వాణిజ్య లక్ష్యానికి నేరుగా మద్దతు ఇస్తుంది</td>
+              </tr>
+              <tr>
+                <td>ఒక జిల్లా ఒక ఉత్పత్తి (ODOP)</td>
+                <td>బ్రాండ్ ఆంధ్ర GI వర్టికల్ అన్ని AP జిల్లాలకు ODOP ను కార్యాచరణలో పెడుతుంది — GI-ట్యాగ్ చేయబడిన జిల్లా ఉత్పత్తులు ప్రామాణీకృత డిజిటల్ స్టోర్‌ఫ్రంట్‌లను పొందుతాయి</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 25</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 38 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 39 — Section 10 Policy Alignment (Rows 5–8)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 10 — Policy Alignment</span>
+          <h2 class="sec-title">National &amp; State <span class="accent">Policy Alignment</span> (2 of 2)</h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Policy / Scheme</th><th>APCS Alignment</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AP Vision 2047 Industrial Policy</td>
+                <td>APCS MSME and agri verticals directly support AP's Vision 2047 target of a $2.4 trillion GSDP — digital commerce formalization is a core enabler</td>
+              </tr>
+              <tr>
+                <td>National Credit Guarantee Scheme</td>
+                <td>APCS Transaction Certificates for sellers integrate with national credit guarantee schemes — expanding formal credit access for AP's informal commerce sector</td>
+              </tr>
+              <tr>
+                <td>DPIIT Startup India</td>
+                <td>My Products and My Brand verticals provide AP startup product sellers a government-backed marketplace — APCS as state complement to Startup India</td>
+              </tr>
+              <tr>
+                <td>National Agri Export Policy</td>
+                <td>APCS Agri Export Gateway aligns with national agri export targets — Brand Andhra agri GI products gain a certified, government-authenticated export channel</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 25</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 10 — విధాన సమలేఖనం</span>
+          <h2 class="sec-title">జాతీయ &amp; రాష్ట్ర <span class="accent">విధాన సమలేఖనం</span> (2 లో 2)</h2>
+          <div class="sec-divider"></div>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>విధానం / పథకం</th><th>APCS సమలేఖనం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>AP విజన్ 2047 పారిశ్రామిక విధానం</td>
+                <td>APCS MSME మరియు వ్యవసాయ వర్టికల్‌లు AP యొక్క $2.4 ట్రిలియన్ GSDP విజన్ 2047 లక్ష్యానికి నేరుగా మద్దతు ఇస్తాయి — డిజిటల్ వాణిజ్య అధికారికీకరణ ఒక ముఖ్య సాధకం</td>
+              </tr>
+              <tr>
+                <td>జాతీయ క్రెడిట్ గ్యారంటీ పథకం</td>
+                <td>విక్రేతలకు APCS లావాదేవీ సర్టిఫికెట్‌లు జాతీయ క్రెడిట్ గ్యారంటీ పథకాలతో అనుసంధానమవుతాయి — AP అనధికారిక వాణిజ్య రంగానికి అధికారిక క్రెడిట్ ప్రాప్యత విస్తరిస్తుంది</td>
+              </tr>
+              <tr>
+                <td>DPIIT స్టార్టప్ ఇండియా</td>
+                <td>నా ఉత్పత్తులు మరియు నా బ్రాండ్ వర్టికల్‌లు AP స్టార్టప్ ఉత్పత్తి విక్రేతలకు ప్రభుత్వ-మద్దతు మార్కెట్‌ప్లేస్ అందిస్తాయి — స్టార్టప్ ఇండియాకు రాష్ట్ర అనుబంధంగా APCS</td>
+              </tr>
+              <tr>
+                <td>జాతీయ వ్యవసాయ ఎగుమతి విధానం</td>
+                <td>APCS వ్యవసాయ ఎగుమతి గేట్‌వే జాతీయ వ్యవసాయ ఎగుమతి లక్ష్యాలతో సమలేఖనమవుతుంది — బ్రాండ్ ఆంధ్ర వ్యవసాయ GI ఉత్పత్తులు సర్టిఫైడ్, ప్రభుత్వ-ప్రామాణీకృత ఎగుమతి ఛానెల్ పొందుతాయి</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 25</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 39 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 40 — Section 11: ASK 01, 02, 03
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 11 — Formal Request to Government</span>
+          <h2 class="sec-title">Four <span class="accent">Asks</span> to Government of AP</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Zian Technologies LLP formally requests the following four actions from the Government of Andhra Pradesh to initiate the AP Commerce Stack engagement. These actions are sequenced — each enables the next. None requires capital outlay from the state government at this stage.</p>
+
+          <div class="highlight-box" style="margin-bottom:18px;">
+            <strong>ASK 01 — LETTER OF INTENT</strong><br><br>
+            Department of IT&amp;C, Government of AP issues a formal Letter of Intent appointing Zian Technologies LLP as the proposed Nodal Agency and Technology Service Provider for the AP Commerce Stack on ONDC. This LoI enables Zian to initiate ONDC Network Participant registration on behalf of Government of AP and to commence platform development under defined scope.<br><br>
+            <em>Action Required: Principal Secretary IT&amp;C issues LoI; no financial commitment at this stage.</em>
+          </div>
+
+          <div class="highlight-box" style="margin-bottom:18px;">
+            <strong>ASK 02 — APEITA REGISTRATION &amp; VENDOR EMPANELMENT</strong><br><br>
+            Formal empanelment of Zian Technologies LLP through Andhra Pradesh Electronics and IT Agency (APEITA) as a technology vendor in the digital commerce and e-governance category. Empanelment enables execution of the MoU, procurement of development services, and initiation of the revenue-sharing agreement.<br><br>
+            <em>Action Required: APEITA Director processes Zian's empanelment application under the appropriate vendor category.</em>
+          </div>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 26</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 11 — ప్రభుత్వానికి అధికారిక విజ్ఞప్తి</span>
+          <h2 class="sec-title">AP ప్రభుత్వానికి <span class="accent">నాలుగు విజ్ఞప్తులు</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Zian Technologies LLP AP Commerce Stack నిశ్చితార్థాన్ని ప్రారంభించడానికి ఆంధ్రప్రదేశ్ ప్రభుత్వం నుండి కింది నాలుగు చర్యలను అధికారికంగా అభ్యర్థిస్తుంది. ఈ చర్యలు క్రమబద్ధంగా ఉన్నాయి — ప్రతిది తదుపరిదాన్ని సక్రియం చేస్తుంది. ఈ దశలో రాష్ట్ర ప్రభుత్వం నుండి ఎటువంటి పెట్టుబడి అవసరం లేదు.</p>
+
+          <div class="highlight-box" style="margin-bottom:18px;">
+            <strong>విజ్ఞప్తి 01 — ఉద్దేశ్య లేఖ (Letter of Intent)</strong><br><br>
+            IT&amp;C విభాగం, AP ప్రభుత్వం ONDC లో AP Commerce Stack కు Zian Technologies LLP ని ప్రతిపాదిత నోడల్ ఏజెన్సీ మరియు టెక్నాలజీ సర్వీస్ ప్రొవైడర్‌గా నియమిస్తూ అధికారిక ఉద్దేశ్య లేఖ జారీ చేస్తుంది.<br><br>
+            <em>చర్య అవసరం: ప్రధాన కార్యదర్శి IT&amp;C LoI జారీ చేస్తారు; ఈ దశలో ఆర్థిక నిబద్ధత లేదు.</em>
+          </div>
+
+          <div class="highlight-box" style="margin-bottom:18px;">
+            <strong>విజ్ఞప్తి 02 — APEITA నమోదు &amp; వెండర్ ఎంపానెల్‌మెంట్</strong><br><br>
+            డిజిటల్ వాణిజ్యం మరియు ఇ-గవర్నెన్స్ కేటగిరీలో సాంకేతిక వెండర్‌గా APEITA ద్వారా Zian Technologies LLP యొక్క అధికారిక ఎంపానెల్‌మెంట్. ఎంపానెల్‌మెంట్ MoU అమలు, అభివృద్ధి సేవల సేకరణ, మరియు ఆదాయ-పంపకం ఒప్పందాన్ని ప్రారంభిస్తుంది.<br><br>
+            <em>చర్య అవసరం: APEITA డైరెక్టర్ తగిన వెండర్ కేటగిరీ కింద Zian దరఖాస్తును ప్రాసెస్ చేస్తారు.</em>
+          </div>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 26</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 40 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 41 — Section 11: ASK 03 & 04
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 11 — Formal Request to Government</span>
+          <h2 class="sec-title">Four Asks — <span class="accent">ASK 03 &amp; 04</span></h2>
+          <div class="sec-divider"></div>
+
+          <div class="highlight-box" style="margin-bottom:18px;">
+            <strong>ASK 03 — APCS GOVERNING COUNCIL CONSTITUTED BY GOVERNMENT ORDER</strong><br><br>
+            Government of Andhra Pradesh issues a Government Order (GO) constituting the APCS Governing Council with the membership defined in Section 9.1 of this proposal. The GO formally vests governance authority in the Council and establishes the accountability chain between Zian Technologies as Nodal Agency and the state government.<br><br>
+            <em>Action Required: Principal Secretary IT&amp;C recommends GO; Chief Secretary approves; published in AP Gazette.</em>
+          </div>
+
+          <div class="highlight-box">
+            <strong>ASK 04 — PILOT DISTRICT AUTHORIZATION (3 DISTRICTS)</strong><br><br>
+            Government sanctions a 90-day live pilot of APCS in 3 AP districts (to be jointly selected by the Governing Council), covering food delivery, grocery, and My Services verticals. The pilot will generate live platform data, first revenue events, and a measurable proof-of-concept for full statewide rollout approval.<br><br>
+            <em>Action Required: Governing Council selects pilot districts; District Collectors instructed to extend administrative support for seller onboarding camps; IT&amp;C coordinates AP Fibernet connectivity.</em>
+          </div>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 26</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 11 — అధికారిక విజ్ఞప్తి</span>
+          <h2 class="sec-title">నాలుగు విజ్ఞప్తులు — <span class="accent">03 &amp; 04</span></h2>
+          <div class="sec-divider"></div>
+
+          <div class="highlight-box" style="margin-bottom:18px;">
+            <strong>విజ్ఞప్తి 03 — ప్రభుత్వ ఉత్తర్వు ద్వారా APCS గవర్నింగ్ కౌన్సిల్ ఏర్పాటు</strong><br><br>
+            ఆంధ్రప్రదేశ్ ప్రభుత్వం ఈ ప్రతిపాదన యొక్క విభాగం 9.1 లో నిర్వచించిన సభ్యత్వంతో APCS గవర్నింగ్ కౌన్సిల్‌ను ఏర్పాటు చేస్తూ ప్రభుత్వ ఉత్తర్వు (GO) జారీ చేస్తుంది. GO అధికారికంగా కౌన్సిల్‌లో పాలన అధికారాన్ని కట్టబెడుతుంది మరియు Zian Technologies నోడల్ ఏజెన్సీగా మరియు రాష్ట్ర ప్రభుత్వం మధ్య జవాబుదారీతన గొలుసును ఏర్పాటు చేస్తుంది.<br><br>
+            <em>చర్య అవసరం: ప్రధాన కార్యదర్శి IT&amp;C GO సిఫారసు; ముఖ్య కార్యదర్శి ఆమోదం; AP గెజెట్‌లో ప్రచురణ.</em>
+          </div>
+
+          <div class="highlight-box">
+            <strong>విజ్ఞప్తి 04 — పైలట్ జిల్లా అధికారం (3 జిల్లాలు)</strong><br><br>
+            ప్రభుత్వం 3 AP జిల్లాలలో (గవర్నింగ్ కౌన్సిల్ చే సంయుక్తంగా ఎంచుకోబడతాయి) 90-రోజుల లైవ్ పైలట్‌కు ఆమోదం ఇస్తుంది, ఆహారం డెలివరీ, కిరాణా, మరియు నా సేవలు వర్టికల్‌లను కవర్ చేస్తుంది. పైలట్ లైవ్ వేదిక డేటా, మొదటి ఆదాయ సంఘటనలు, మరియు పూర్తి రాష్ట్రవ్యాప్త రోల్‌అవుట్ ఆమోదానికి కొలవదగిన నిరూపణ-of-కాన్సెప్ట్ రూపొందిస్తుంది.<br><br>
+            <em>చర్య అవసరం: గవర్నింగ్ కౌన్సిల్ పైలట్ జిల్లాలు ఎంచుకుంటుంది; జిల్లా కలెక్టర్లు విక్రేత నమోదు శిబిరాలకు అడ్మినిస్ట్రేటివ్ మద్దతు అందించాలని సూచన; IT&amp;C AP ఫైబర్‌నెట్ కనెక్టివిటీ సమన్వయం.</em>
+          </div>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 26</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 41 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 42 — Section 12: About Zian Technologies
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Section 12 — About Zian Technologies LLP</span>
+          <h2 class="sec-title">About <span class="accent">Zian Technologies LLP</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Zian Technologies LLP is headquartered in Visakhapatnam, Andhra Pradesh. Founded and led by Andhra Pradesh natives, Zian operates at the intersection of platform technology, edge AI, and digital commerce.</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>Detail</th><th>Information</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Entity Type</td>
+                <td>Limited Liability Partnership (LLP) registered in Andhra Pradesh</td>
+              </tr>
+              <tr>
+                <td>Headquarters</td>
+                <td>Visakhapatnam, Andhra Pradesh</td>
+              </tr>
+              <tr>
+                <td>CEO</td>
+                <td>Bhushan Thangirala — Platform Strategy, Government Engagement, Revenue Architecture</td>
+              </tr>
+              <tr>
+                <td>CTO</td>
+                <td>CH Ravi Kumar — Technology Architecture, ONDC Integration, Edge AI Systems</td>
+              </tr>
+              <tr>
+                <td>Primary Verticals</td>
+                <td>Cinema Anti-Piracy Technology (Forensic Watermarking SaaS); Government Commerce Technology (ONDC / APCS), Geo Fencing, IoTs</td>
+              </tr>
+              <tr>
+                <td>Technology Depth</td>
+                <td>ONDC protocol architecture, edge AI, digital watermarking, computer vision, signal processing, platform engineering</td>
+              </tr>
+              <tr>
+                <td>Anti-Piracy Platform</td>
+                <td>TPVM (Temporal Psycho-Visual Modulation) engine; audio watermarking; multi-platform copyright enforcement — demonstrating technology-at-governance-scale capability directly applicable to APCS</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="body-text" style="margin-top:20px;font-style:italic;color:#4f46e5;">Zian is not a generic IT services company. The specific combination of commerce platform expertise, government accountability, and AP-native leadership makes Zian the uniquely appropriate partner for this engagement.</p>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 27</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">విభాగం 12 — Zian Technologies LLP గురించి</span>
+          <h2 class="sec-title"><span class="accent">Zian Technologies LLP</span> గురించి</h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Zian Technologies LLP విశాఖపట్నం, ఆంధ్రప్రదేశ్‌లో ప్రధాన కార్యాలయాన్ని కలిగి ఉంది. ఆంధ్రప్రదేశ్ స్థానికులచే స్థాపించబడి నడిపించబడిన Zian, ప్లాట్‌ఫామ్ టెక్నాలజీ, ఎడ్జ్ AI, మరియు డిజిటల్ వాణిజ్యం యొక్క కూడలిలో పనిచేస్తుంది.</p>
+
+          <table class="data-table">
+            <thead>
+              <tr><th>వివరం</th><th>సమాచారం</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>సంస్థ రకం</td>
+                <td>ఆంధ్రప్రదేశ్‌లో నమోదైన లిమిటెడ్ లయబిలిటీ పార్టనర్‌షిప్ (LLP)</td>
+              </tr>
+              <tr>
+                <td>ప్రధాన కార్యాలయం</td>
+                <td>విశాఖపట్నం, ఆంధ్రప్రదేశ్</td>
+              </tr>
+              <tr>
+                <td>CEO</td>
+                <td>భూషణ్ థంగిరాల — ప్లాట్‌ఫామ్ స్ట్రాటజీ, ప్రభుత్వ నిశ్చితార్థం, ఆదాయ నిర్మాణం</td>
+              </tr>
+              <tr>
+                <td>CTO</td>
+                <td>CH రవి కుమార్ — టెక్నాలజీ ఆర్కిటెక్చర్, ONDC ఏకీకరణ, ఎడ్జ్ AI వ్యవస్థలు</td>
+              </tr>
+              <tr>
+                <td>ప్రాథమిక వర్టికల్‌లు</td>
+                <td>సినిమా యాంటీ-పైరసీ టెక్నాలజీ (ఫోరెన్సిక్ వాటర్‌మార్కింగ్ SaaS); ప్రభుత్వ వాణిజ్య టెక్నాలజీ (ONDC / APCS), జియో ఫెన్సింగ్, IoTs</td>
+              </tr>
+              <tr>
+                <td>సాంకేతిక లోతు</td>
+                <td>ONDC ప్రోటోకాల్ ఆర్కిటెక్చర్, ఎడ్జ్ AI, డిజిటల్ వాటర్‌మార్కింగ్, కంప్యూటర్ విజన్, సిగ్నల్ ప్రాసెసింగ్, ప్లాట్‌ఫామ్ ఇంజినీరింగ్</td>
+              </tr>
+              <tr>
+                <td>యాంటీ-పైరసీ ప్లాట్‌ఫామ్</td>
+                <td>TPVM ఇంజిన్; ఆడియో వాటర్‌మార్కింగ్; మల్టీ-ప్లాట్‌ఫామ్ కాపీరైట్ అమలు — APCS కు నేరుగా వర్తించే గవర్నెన్స్-స్కేల్ సాంకేతిక సామర్థ్యాన్ని ప్రదర్శిస్తుంది</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="body-text" style="margin-top:20px;font-style:italic;color:#4f46e5;">Zian సాధారణ IT సేవల సంస్థ కాదు. వాణిజ్య వేదిక నైపుణ్యం, ప్రభుత్వ జవాబుదారీతనం, మరియు AP-స్థానిక నాయకత్వం యొక్క నిర్దిష్ట కలయిక Zian ని ఈ నిశ్చితార్థానికి ప్రత్యేకంగా తగిన భాగస్వామిగా చేస్తుంది.</p>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 27</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 42 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 43 — Conclusion
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">Conclusion</span>
+          <h2 class="sec-title">AP Commerce Stack — <span class="accent">The Case for Action</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">Every transaction on AP Commerce Stack is a revenue event for Government of Andhra Pradesh. Every seller registered is a family empowered. Every rupee earned is the CM's vision made real.</p>
+
+          <p class="body-text">The Open Network for Digital Commerce presents Andhra Pradesh with a structural, time-sensitive opportunity to claim ownership of its digital commerce future. The Nagaland Ilandlo model has proven the governance architecture. The NPCI-UPI precedent has proven the revenue model. The CM's vision has defined the social objective. All three threads converge in the AP Commerce Stack.</p>
+
+          <p class="body-text">Zian Technologies LLP stands ready to execute — as Nodal Agency accountable to government, and as Technology Service Provider delivering the platform. We request the Government of Andhra Pradesh to initiate the four steps defined in Section 11, and to authorize the beginning of a partnership that will transform AP's commercial architecture for a generation.</p>
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page 28</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">ముగింపు</span>
+          <h2 class="sec-title">AP Commerce Stack — <span class="accent">చర్యకు కారణం</span></h2>
+          <div class="sec-divider"></div>
+
+          <p class="body-text">AP Commerce Stack లోని ప్రతి లావాదేవీ ఆంధ్రప్రదేశ్ ప్రభుత్వానికి ఆదాయ సంఘటన. నమోదైన ప్రతి విక్రేత శక్తివంతమైన కుటుంబం. సంపాదించిన ప్రతి రూపాయి CM యొక్క దృష్టి వాస్తవమైనది.</p>
+
+          <p class="body-text">డిజిటల్ వాణిజ్యానికి ఓపెన్ నెట్‌వర్క్ ఆంధ్రప్రదేశ్‌కు దాని డిజిటల్ వాణిజ్య భవిష్యత్తుపై యాజమాన్యాన్ని పొందడానికి నిర్మాణాత్మక, సమయ-సున్నితమైన అవకాశాన్ని అందిస్తుంది. నాగాలాండ్ ఇలాండ్లో మోడల్ పాలన నిర్మాణాన్ని నిరూపించింది. NPCI-UPI పూర్వాపరాలు ఆదాయ మోడల్‌ను నిరూపించాయి. CM యొక్క దృష్టి సామాజిక లక్ష్యాన్ని నిర్వచించింది. మూడు థ్రెడ్‌లు AP Commerce Stack లో కలుస్తాయి.</p>
+
+          <p class="body-text">Zian Technologies LLP అమలు చేయడానికి సిద్ధంగా ఉంది — ప్రభుత్వానికి జవాబుదారీగా ఉండే నోడల్ ఏజెన్సీగా, మరియు వేదికను అందించే టెక్నాలజీ సర్వీస్ ప్రొవైడర్‌గా. మేము ఆంధ్రప్రదేశ్ ప్రభుత్వాన్ని విభాగం 11 లో నిర్వచించిన నాలుగు దశలను ప్రారంభించమని, మరియు ఒక తరానికి AP యొక్క వాణిజ్య నిర్మాణాన్ని మార్చే భాగస్వామ్యం యొక్క ప్రారంభాన్ని అధికారం ఇవ్వమని అభ్యర్థిస్తున్నాము.</p>
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ 28</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 43 -->
+
+
+    <!-- ════════════════════════════════
+         SLIDE 44 — Signatories (PDF format)
+    ════════════════════════════════ -->
+    <div class="slide">
+      <div class="slide-inner">
+
+        <!-- EN -->
+        <div class="en">
+          <span class="sec-label">ANDHRA PRADESH COMMERCE STACK / Zian Technologies LLP — Nodal Implementation Proposal</span>
+          <div class="sec-divider"></div>
+
+          <div style="display:flex; gap:60px; flex-wrap:wrap; margin-top:10px;">
+
+            <!-- Signatory 1 -->
+            <div style="flex:1; min-width:260px; border-left:4px solid #4f46e5; padding-left:24px; margin-bottom:32px;">
+              <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">Bhushan Thangirala</p>
+              <p style="font-size:1.05rem; font-weight:600; color:#4f46e5; margin-bottom:12px;">Chief Executive Officer, Zian Technologies LLP</p>
+              <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
+                Proposed Nodal Agency Head — AP Commerce Stack<br>
+                Visakhapatnam, Andhra Pradesh<br>
+                +91 7702929668 &nbsp;|&nbsp; bhushan@ziantechnologies.com<br>
+                www.ziantechnologies.com
+              </p>
+            </div>
+
+            <!-- Signatory 2 -->
+            <div style="flex:1; min-width:260px; border-left:4px solid #7c3aed; padding-left:24px; margin-bottom:32px;">
+              <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">Dr. Ravi Kumar CH</p>
+              <p style="font-size:1.05rem; font-weight:600; color:#7c3aed; margin-bottom:12px;">Chief Technical Officer, Zian Technologies LLP</p>
+              <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
+                +91 7013310300 &nbsp;|&nbsp; ravikumar@ziantechnologies.com
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Signatory 3 -->
+          <div style="border-left:4px solid #6366f1; padding-left:24px; margin-bottom:36px;">
+            <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">Mr. Bharat Meda</p>
+            <p style="font-size:1.05rem; font-weight:600; color:#6366f1; margin-bottom:4px;">Consultant, Zian Technologies LLP</p>
+            <p style="font-size:1rem; color:#374151;">Board Member, TalentAP</p>
+          </div>
+
+          <p class="page-note">CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal &nbsp;·&nbsp; Page 28</p>
+        </div>
+
+        <!-- TE -->
+        <div class="te hidden">
+          <span class="sec-label">ఆంధ్రప్రదేశ్ కామర్స్ స్టాక్ / Zian Technologies LLP — నోడల్ అమలు ప్రతిపాదన</span>
+          <div class="sec-divider"></div>
+
+          <div style="display:flex; gap:60px; flex-wrap:wrap; margin-top:10px;">
+
+            <div style="flex:1; min-width:260px; border-left:4px solid #4f46e5; padding-left:24px; margin-bottom:32px;">
+              <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">భూషణ్ థంగిరాల</p>
+              <p style="font-size:1.05rem; font-weight:600; color:#4f46e5; margin-bottom:12px;">ముఖ్య కార్యనిర్వహణ అధికారి, Zian Technologies LLP</p>
+              <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
+                ప్రతిపాదిత నోడల్ ఏజెన్సీ హెడ్ — AP Commerce Stack<br>
+                విశాఖపట్నం, ఆంధ్రప్రదేశ్<br>
+                +91 7702929668 &nbsp;|&nbsp; bhushan@ziantechnologies.com<br>
+                www.ziantechnologies.com
+              </p>
+            </div>
+
+            <div style="flex:1; min-width:260px; border-left:4px solid #7c3aed; padding-left:24px; margin-bottom:32px;">
+              <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">డా. రవి కుమార్ CH</p>
+              <p style="font-size:1.05rem; font-weight:600; color:#7c3aed; margin-bottom:12px;">ముఖ్య సాంకేతిక అధికారి, Zian Technologies LLP</p>
+              <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
+                +91 7013310300 &nbsp;|&nbsp; ravikumar@ziantechnologies.com
+              </p>
+            </div>
+
+          </div>
+
+          <div style="border-left:4px solid #6366f1; padding-left:24px; margin-bottom:36px;">
+            <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">శ్రీ భరత్ మేడా</p>
+            <p style="font-size:1.05rem; font-weight:600; color:#6366f1; margin-bottom:4px;">కన్సల్టెంట్, Zian Technologies LLP</p>
+            <p style="font-size:1rem; color:#374151;">బోర్డ్ సభ్యుడు, TalentAP</p>
+          </div>
+
+          <p class="page-note">రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన &nbsp;·&nbsp; పేజీ 28</p>
+        </div>
+
+      </div>
+    </div><!-- /slide 44 -->
+
+
+  </div><!-- /track -->
+</div><!-- /viewport -->
+
+
+<script>
+  const TOTAL = 45;
+  let cur = 0;
+
+  // Stamp correct sequential page numbers on every slide's .page-note
+  document.querySelectorAll('.slide').forEach((slide, idx) => {
+    const pg = idx + 1;
+    slide.querySelectorAll('.en .page-note, .en.page-note').forEach(el => {
+      el.textContent = 'CONFIDENTIAL — Government of Andhra Pradesh | ONDC Nodal Implementation Proposal — Page ' + pg;
+    });
+    slide.querySelectorAll('.te .page-note, .te.page-note').forEach(el => {
+      el.textContent = 'రహస్యం — ఆంధ్రప్రదేశ్ ప్రభుత్వం | ONDC నోడల్ అమలు ప్రతిపాదన — పేజీ ' + pg;
+    });
+  });
+
+  function goTo(n) {
+    if (n < 0) n = TOTAL - 1;
+    if (n >= TOTAL) n = 0;
+    cur = n;
+    document.getElementById('track').style.transform = 'translateX(-' + (n * 100) + '%)';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') goTo(cur + 1);
+    if (e.key === 'ArrowLeft')  goTo(cur - 1);
+  });
+
+  function setLang(lang) {
+    document.querySelectorAll('.en').forEach(el =>
+      lang === 'en' ? el.classList.remove('hidden') : el.classList.add('hidden'));
+    document.querySelectorAll('.te').forEach(el =>
+      lang === 'te' ? el.classList.remove('hidden') : el.classList.add('hidden'));
+    document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+    document.getElementById('btn-te').classList.toggle('active', lang === 'te');
+  }
+
+  setLang('en');
+</script>
+
+</body>
+</html>
