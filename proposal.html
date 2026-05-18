@@ -3783,14 +3783,15 @@
   vp.addEventListener('touchstart', e => {
     _tx = e.touches[0].clientX;
     _ty = e.touches[0].clientY;
-    /* Check if touch started inside a table — needs harder swipe */
-    _onTable = !!e.target.closest('.data-table');
+    /* Use elementFromPoint for reliable table detection */
+    const el = document.elementFromPoint(_tx, _ty);
+    _onTable = !!(el && el.closest('table'));
   }, { passive: true });
   vp.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - _tx;
     const dy = e.changedTouches[0].clientY - _ty;
-    /* Table: 85px firm swipe — normal slides: 25px smooth swipe */
-    const threshold = _onTable ? 85 : 25;
+    /* Slides: 25px smooth swipe — Table: 90px firm swipe */
+    const threshold = _onTable ? 90 : 25;
     if (Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dx) > threshold) {
       if (dx < 0) goTo(cur + 1);  /* swipe left  → next slide */
       else        goTo(cur - 1);  /* swipe right → prev slide (wraps to last) */
