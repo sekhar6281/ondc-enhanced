@@ -99,6 +99,11 @@
     display: flex;
     justify-content: center;
     padding: 44px 80px 60px;
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE / Edge */
+  }
+  .slide::-webkit-scrollbar {
+    display: none;               /* Chrome / Safari */
   }
 
   .slide-inner {
