@@ -3778,17 +3778,20 @@
   });
 
   /* ── Touch / Swipe navigation ── */
-  let _tx = 0, _ty = 0;
+  let _tx = 0, _ty = 0, _onTable = false;
   const vp = document.querySelector('.viewport');
   vp.addEventListener('touchstart', e => {
     _tx = e.touches[0].clientX;
     _ty = e.touches[0].clientY;
+    /* Check if touch started inside a table — needs harder swipe */
+    _onTable = !!e.target.closest('.data-table');
   }, { passive: true });
   vp.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - _tx;
     const dy = e.changedTouches[0].clientY - _ty;
-    /* Only trigger on clearly horizontal swipes (dx dominant, > 40px) */
-    if (Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dx) > 40) {
+    /* Table: require 160px hard swipe — elsewhere: 40px normal swipe */
+    const threshold = _onTable ? 160 : 40;
+    if (Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dx) > threshold) {
       if (dx < 0) goTo(cur + 1);  /* swipe left  → next slide */
       else        goTo(cur - 1);  /* swipe right → prev slide (wraps to last) */
     }
