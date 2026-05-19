@@ -4048,6 +4048,29 @@
     document.body.appendChild(bar);
   })();
 
+  /* Inject the voice button once */
+  (function () {
+    const btn = document.createElement('button');
+    btn.id = 'audio-btn';
+    btn.title = 'Voice (coming soon)';
+    btn.setAttribute('aria-label', 'Voice narration');
+    btn.innerHTML = '&#x1F50A;'; /* 🔊 */
+    btn.classList.add('no-audio');
+    document.body.appendChild(btn);
+
+    const tip = document.createElement('div');
+    tip.id = 'audio-tooltip';
+    tip.textContent = 'Audio coming soon';
+    document.body.appendChild(tip);
+
+    /* Show tooltip on tap/click */
+    btn.addEventListener('click', function () {
+      tip.classList.add('show');
+      clearTimeout(btn._tipTimer);
+      btn._tipTimer = setTimeout(function () { tip.classList.remove('show'); }, 2200);
+    });
+  })();
+
   function startSlideTimer() {
     cancelAnimationFrame(_timerRaf);
     _timerPaused  = false;
