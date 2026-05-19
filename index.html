@@ -4002,6 +4002,11 @@
   vp.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - _tx;
     const dy = e.changedTouches[0].clientY - _ty;
+    /* Tap (no significant movement) → pause / resume timer */
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+      toggleSlideTimer();
+      return;
+    }
     /* Slides: 25px smooth swipe — Table: 90px firm swipe */
     const threshold = _onTable ? 90 : 25;
     if (Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dx) > threshold) {
