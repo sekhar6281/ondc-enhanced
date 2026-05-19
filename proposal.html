@@ -3778,57 +3778,72 @@
 
   /* ─────────────────────────────────────────────
      SLIDE-ENTRY ANIMATION
-     Elements inside each slide appear one-by-one
-     after the 0.45s track transition completes.
+     Every line / row / block appears one-by-one
+     with a slow, deliberate fade-up after the
+     0.45 s track transition completes.
   ───────────────────────────────────────────── */
   const ANIM_SELECTOR = [
+    /* Cover slide elements */
+    '.badge',
+    'h1',
+    '.divider',
+    '.cover-subtitle',
+    '.cover-tagline',
+    '.cover-vision',
+    '.submit-col',
+    /* Regular slides */
     '.sec-label',
-    'h1', 'h2.sec-title',
+    'h2.sec-title',
     '.sec-divider',
-    '.cover-title', '.cover-sub', '.cover-meta',
     'p.body-text',
+    'h3.sub-head',
     '.bullet-list > li',
     '.highlight-box',
-    'h3.sub-head',
+    /* Tables — header first, then each row */
     '.data-table thead',
-    '.data-table tbody tr',
+    '.data-table tbody > tr',
+    /* Cards / stat boxes */
     '.layer-card',
-    '.stat-box', '.stat-card'
+    '.stat-box',
+    '.stat-card'
   ].join(', ');
 
-  const ANIM_FIRST_DELAY = 380;   /* ms — wait for track transition to finish */
-  const ANIM_STAGGER     = 110;   /* ms between each element */
+  const ANIM_FIRST_DELAY = 360;   /* ms — let track slide finish (0.45 s) */
+  const ANIM_STAGGER     = 170;   /* ms between each line — slow, readable  */
+  const ANIM_DURATION    = '0.6s ease';
   let   _animTimers      = [];
 
   function animateSlide(n, instant) {
-    /* Cancel any in-progress animation */
+    /* Cancel any timers still running from previous slide */
     _animTimers.forEach(t => clearTimeout(t));
     _animTimers = [];
 
     const slide = slides[n];
     if (!slide) return;
 
-    /* Find the currently visible language pane */
+    /* Find the visible language pane in this slide */
     const pane = slide.querySelector('.en:not(.hidden)') ||
                  slide.querySelector('.te:not(.hidden)');
     if (!pane) return;
 
+    /* Collect every animatable element in DOM order */
     const els = Array.from(pane.querySelectorAll(ANIM_SELECTOR));
     if (!els.length) return;
 
-    /* Instantly hide all animatable elements */
+    /* Instantly hide them all before any repaint */
     els.forEach(el => {
-      el.style.opacity   = '0';
-      el.style.transform = 'translateY(16px)';
+      el.style.opacity    = '0';
+      el.style.transform  = 'translateY(22px)';
       el.style.transition = 'none';
     });
 
-    const firstDelay = instant ? 60 : ANIM_FIRST_DELAY;
+    const firstDelay = instant ? 80 : ANIM_FIRST_DELAY;
 
-    /* Stagger-reveal each element */
+    /* Stagger-reveal each element with a slow fade-up */
     els.forEach((el, i) => {
       const t = setTimeout(() => {
-        el.style.transition = 'opacity 0.42s ease, transform 0.42s ease';
+        el.style.transition = 'opacity ' + ANIM_DURATION +
+                              ', transform ' + ANIM_DURATION;
         el.style.opacity    = '1';
         el.style.transform  = 'translateY(0)';
       }, firstDelay + i * ANIM_STAGGER);
