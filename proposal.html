@@ -4026,6 +4026,8 @@
     document.getElementById('btn-te').classList.toggle('active', lang === 'te');
     /* Re-animate current slide in the new language */
     animateSlide(cur, true);
+    /* Restart blue bar fresh on language switch */
+    startSlideTimer();
     /* If audio was playing, switch to the new language audio immediately */
     if (_audio && !_audio.paused) {
       playSlideAudio(cur, lang);
