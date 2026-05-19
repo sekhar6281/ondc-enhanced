@@ -3974,6 +3974,8 @@
     }
     /* Always start new slide from top */
     if (slides[n]) slides[n].scrollTop = 0;
+    /* Stop any playing audio */
+    stopAudio();
     /* Restart slide progress timer */
     startSlideTimer();
     /* Animate elements into view */
@@ -4024,6 +4026,10 @@
     document.getElementById('btn-te').classList.toggle('active', lang === 'te');
     /* Re-animate current slide in the new language */
     animateSlide(cur, true);
+    /* If audio was playing, switch to the new language audio immediately */
+    if (_audio && !_audio.paused) {
+      playSlideAudio(cur, lang);
+    }
   }
 
   /* ─────────────────────────────────────────────
@@ -4048,26 +4054,74 @@
     document.body.appendChild(bar);
   })();
 
+  /* ── Audio playback ── */
+  const AUDIO_SLIDE_COUNT = 5;   /* slides 1-5 have audio (index 0-4) */
+  let _audio    = null;
+  let _audioLang = 'en';
+
+  function _currentLang() {
+    return document.getElementById('btn-en').classList.contains('active') ? 'en' : 'te';
+  }
+
+  function stopAudio() {
+    if (_audio) {
+      _audio.pause();
+      _audio.src = '';
+      _audio = null;
+    }
+    const btn = document.getElementById('audio-btn');
+    if (btn) { btn.classList.remove('playing'); btn.innerHTML = '&#x1F50A;'; }
+    /* Resume slide timer only if it was paused by audio */
+    if (_timerPaused) resumeSlideTimer();
+  }
+
+  function playSlideAudio(slideIdx, lang) {
+    stopAudio();
+    if (slideIdx >= AUDIO_SLIDE_COUNT) {
+      /* No audio for this slide — show tooltip */
+      const tip = document.getElementById('audio-tooltip');
+      if (tip) {
+        tip.textContent = lang === 'te' ? 'ఈ స్లైడ్‌కు ఆడియో లేదు' : 'No audio for this slide';
+        tip.classList.add('show');
+        clearTimeout(tip._t);
+        tip._t = setTimeout(function () { tip.classList.remove('show'); }, 2200);
+      }
+      return;
+    }
+    const num = String(slideIdx + 1).padStart(2, '0');
+    const src = 'audio/' + lang + '_' + num + '.mp3';
+    _audio = new Audio(src);
+    _audioLang = lang;
+    const btn = document.getElementById('audio-btn');
+    if (btn) { btn.classList.add('playing'); btn.innerHTML = '&#x23F9;&#xFE0F;'; }
+    /* Pause blue bar while audio plays */
+    pauseSlideTimer();
+    _audio.addEventListener('ended', function () { stopAudio(); });
+    _audio.addEventListener('error', function () { stopAudio(); });
+    _audio.play().catch(function () { stopAudio(); });
+  }
+
   /* Inject the voice button once */
   (function () {
     const btn = document.createElement('button');
     btn.id = 'audio-btn';
-    btn.title = 'Voice (coming soon)';
+    btn.title = 'Play voice narration';
     btn.setAttribute('aria-label', 'Voice narration');
-    btn.innerHTML = '&#x1F50A;'; /* 🔊 */
-    btn.classList.add('no-audio');
+    btn.innerHTML = '&#x1F50A;';
     document.body.appendChild(btn);
 
     const tip = document.createElement('div');
     tip.id = 'audio-tooltip';
-    tip.textContent = 'Audio coming soon';
     document.body.appendChild(tip);
 
-    /* Show tooltip on tap/click */
     btn.addEventListener('click', function () {
-      tip.classList.add('show');
-      clearTimeout(btn._tipTimer);
-      btn._tipTimer = setTimeout(function () { tip.classList.remove('show'); }, 2200);
+      if (_audio && !_audio.paused) {
+        /* Audio playing → stop it and resume bar */
+        stopAudio();
+      } else {
+        /* Start audio for current slide */
+        playSlideAudio(cur, _currentLang());
+      }
     });
   })();
 
