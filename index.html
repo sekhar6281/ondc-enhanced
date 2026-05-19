@@ -3981,6 +3981,10 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') goTo(cur + 1);
     if (e.key === 'ArrowLeft')  goTo(cur - 1);
+    if (e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault(); /* stop page scroll */
+      toggleSlideTimer();
+    }
   });
 
   /* ── Touch / Swipe navigation ── */
@@ -4022,8 +4026,10 @@
      Manual navigation (key / swipe) resets & restarts.
   ───────────────────────────────────────────── */
   const SLIDE_DURATION_MS = 9000; /* 9 seconds per slide */
-  let _timerRaf   = null;
-  let _timerStart = 0;
+  let _timerRaf     = null;
+  let _timerStart   = 0;
+  let _timerPaused  = false;
+  let _timerElapsed = 0; /* ms already elapsed before pause */
 
   /* Inject the progress bar element once */
   (function () {
@@ -4037,12 +4043,15 @@
 
   function startSlideTimer() {
     cancelAnimationFrame(_timerRaf);
+    _timerPaused  = false;
+    _timerElapsed = 0;
     const fill = document.getElementById('slide-timer-fill');
     fill.style.width = '0%';
     _timerStart = performance.now();
 
     function tick(now) {
-      const pct = Math.min(((now - _timerStart) / SLIDE_DURATION_MS) * 100, 100);
+      const elapsed = _timerElapsed + (now - _timerStart);
+      const pct = Math.min((elapsed / SLIDE_DURATION_MS) * 100, 100);
       fill.style.width = pct + '%';
       if (pct < 100) {
         _timerRaf = requestAnimationFrame(tick);
@@ -4052,6 +4061,38 @@
       }
     }
     _timerRaf = requestAnimationFrame(tick);
+  }
+
+  function pauseSlideTimer() {
+    if (_timerPaused) return;
+    _timerPaused = true;
+    cancelAnimationFrame(_timerRaf);
+    /* Save how much time has already elapsed */
+    _timerElapsed += performance.now() - _timerStart;
+  }
+
+  function resumeSlideTimer() {
+    if (!_timerPaused) return;
+    _timerPaused = false;
+    _timerStart  = performance.now();
+
+    const fill = document.getElementById('slide-timer-fill');
+    function tick(now) {
+      const elapsed = _timerElapsed + (now - _timerStart);
+      const pct = Math.min((elapsed / SLIDE_DURATION_MS) * 100, 100);
+      fill.style.width = pct + '%';
+      if (pct < 100) {
+        _timerRaf = requestAnimationFrame(tick);
+      } else {
+        goTo(cur + 1);
+      }
+    }
+    _timerRaf = requestAnimationFrame(tick);
+  }
+
+  function toggleSlideTimer() {
+    if (_timerPaused) resumeSlideTimer();
+    else              pauseSlideTimer();
   }
 
   setLang('en');
