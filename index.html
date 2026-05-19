@@ -3776,6 +3776,66 @@
 
   const slides = document.querySelectorAll('.slide');
 
+  /* ─────────────────────────────────────────────
+     SLIDE-ENTRY ANIMATION
+     Elements inside each slide appear one-by-one
+     after the 0.45s track transition completes.
+  ───────────────────────────────────────────── */
+  const ANIM_SELECTOR = [
+    '.sec-label',
+    'h1', 'h2.sec-title',
+    '.sec-divider',
+    '.cover-title', '.cover-sub', '.cover-meta',
+    'p.body-text',
+    '.bullet-list > li',
+    '.highlight-box',
+    'h3.sub-head',
+    '.data-table thead',
+    '.data-table tbody tr',
+    '.layer-card',
+    '.stat-box', '.stat-card'
+  ].join(', ');
+
+  const ANIM_FIRST_DELAY = 380;   /* ms — wait for track transition to finish */
+  const ANIM_STAGGER     = 110;   /* ms between each element */
+  let   _animTimers      = [];
+
+  function animateSlide(n, instant) {
+    /* Cancel any in-progress animation */
+    _animTimers.forEach(t => clearTimeout(t));
+    _animTimers = [];
+
+    const slide = slides[n];
+    if (!slide) return;
+
+    /* Find the currently visible language pane */
+    const pane = slide.querySelector('.en:not(.hidden)') ||
+                 slide.querySelector('.te:not(.hidden)');
+    if (!pane) return;
+
+    const els = Array.from(pane.querySelectorAll(ANIM_SELECTOR));
+    if (!els.length) return;
+
+    /* Instantly hide all animatable elements */
+    els.forEach(el => {
+      el.style.opacity   = '0';
+      el.style.transform = 'translateY(16px)';
+      el.style.transition = 'none';
+    });
+
+    const firstDelay = instant ? 60 : ANIM_FIRST_DELAY;
+
+    /* Stagger-reveal each element */
+    els.forEach((el, i) => {
+      const t = setTimeout(() => {
+        el.style.transition = 'opacity 0.42s ease, transform 0.42s ease';
+        el.style.opacity    = '1';
+        el.style.transform  = 'translateY(0)';
+      }, firstDelay + i * ANIM_STAGGER);
+      _animTimers.push(t);
+    });
+  }
+
   function goTo(n) {
     const wrap = (n < 0 || n >= TOTAL);
     if (n < 0) n = TOTAL - 1;
@@ -3793,6 +3853,8 @@
     }
     /* Always start new slide from top */
     if (slides[n]) slides[n].scrollTop = 0;
+    /* Animate elements into view */
+    animateSlide(n);
   }
 
   document.addEventListener('keydown', e => {
@@ -3817,7 +3879,7 @@
     const threshold = _onTable ? 90 : 25;
     if (Math.abs(dx) > Math.abs(dy) * 1.4 && Math.abs(dx) > threshold) {
       if (dx < 0) goTo(cur + 1);  /* swipe left  → next slide */
-      else        goTo(cur - 1);  /* swipe right → prev slide (wraps to last) */
+      else        goTo(cur - 1);  /* swipe right → prev slide */
     }
   }, { passive: true });
 
@@ -3828,9 +3890,13 @@
       lang === 'te' ? el.classList.remove('hidden') : el.classList.add('hidden'));
     document.getElementById('btn-en').classList.toggle('active', lang === 'en');
     document.getElementById('btn-te').classList.toggle('active', lang === 'te');
+    /* Re-animate current slide in the new language */
+    animateSlide(cur, true);
   }
 
   setLang('en');
+  /* Animate slide 1 on initial page load */
+  animateSlide(0, true);
 </script>
 
 </body>
