@@ -469,20 +469,23 @@
 
     /* ── Slide padding ── */
     .slide {
-      padding: 20px 16px 28px;
+      padding: 20px 16px 90px;
     }
 
     /* ── Cover ── */
-    .cover           { justify-content: flex-start; padding-top: 10px; }
-    .cover-title     { font-size: 2rem; }
-    .cover-subtitle  { font-size: 1.1rem; }
-    .cover-tagline   { font-size: 1rem; line-height: 1.85; }
-    .cover-vision    { font-size: 1rem; margin-bottom: 24px; }
-    .badge           { font-size: 0.78rem; padding: 9px 18px; margin-bottom: 20px; }
-    .divider         { margin: 14px auto 18px; }
+    .cover           { justify-content: flex-start; min-height: unset; padding-top: 8px; padding-bottom: 90px; }
+    .cover-title     { font-size: 1.9rem; }
+    .cover-subtitle  { font-size: 1rem; margin-bottom: 10px; }
+    .cover-tagline   { font-size: 0.95rem; line-height: 1.75; margin-bottom: 12px; }
+    .cover-vision    { font-size: 0.95rem; margin-bottom: 20px; }
+    .badge           { font-size: 0.75rem; padding: 8px 16px; margin-bottom: 16px; }
+    .divider         { margin: 12px auto 16px; }
 
     .submit-box      { flex-direction: column; }
+    .submit-col      { min-width: unset; width: 100%; }
     .submit-col:first-child { border-right: none; border-bottom: 1.5px solid #e0e7ff; }
+    .s-name          { font-size: 0.95rem; }
+    .s-detail        { font-size: 0.88rem; line-height: 1.7; }
 
     /* ── Section heading ── */
     .sec-title  { font-size: 1.6rem; }
