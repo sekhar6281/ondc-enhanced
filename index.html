@@ -3786,7 +3786,7 @@
           <div style="display:flex; gap:60px; flex-wrap:wrap; margin-top:10px;">
 
             <!-- Signatory 1 -->
-            <div style="flex:1; min-width:260px; border-left:4px solid #4f46e5; padding-left:24px; margin-bottom:32px;">
+            <div class="sig-card" style="flex:1; min-width:260px; border-left:4px solid #4f46e5; padding-left:24px; margin-bottom:32px;">
               <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">Bhushan Thangirala</p>
               <p style="font-size:1.05rem; font-weight:600; color:#4f46e5; margin-bottom:12px;">Chief Executive Officer, Zian Technologies LLP</p>
               <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
@@ -3798,7 +3798,7 @@
             </div>
 
             <!-- Signatory 2 -->
-            <div style="flex:1; min-width:260px; border-left:4px solid #7c3aed; padding-left:24px; margin-bottom:32px;">
+            <div class="sig-card" style="flex:1; min-width:260px; border-left:4px solid #7c3aed; padding-left:24px; margin-bottom:32px;">
               <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">Dr. Ravi Kumar CH</p>
               <p style="font-size:1.05rem; font-weight:600; color:#7c3aed; margin-bottom:12px;">Chief Technical Officer, Zian Technologies LLP</p>
               <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
@@ -3809,7 +3809,7 @@
           </div>
 
           <!-- Signatory 3 -->
-          <div style="border-left:4px solid #6366f1; padding-left:24px; margin-bottom:36px;">
+          <div class="sig-card" style="border-left:4px solid #6366f1; padding-left:24px; margin-bottom:36px;">
             <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">Mr. Bharat Meda</p>
             <p style="font-size:1.05rem; font-weight:600; color:#6366f1; margin-bottom:4px;">Consultant, Zian Technologies LLP</p>
             <p style="font-size:1rem; color:#374151;">Board Member, TalentAP</p>
@@ -3825,7 +3825,7 @@
 
           <div style="display:flex; gap:60px; flex-wrap:wrap; margin-top:10px;">
 
-            <div style="flex:1; min-width:260px; border-left:4px solid #4f46e5; padding-left:24px; margin-bottom:32px;">
+            <div class="sig-card" style="flex:1; min-width:260px; border-left:4px solid #4f46e5; padding-left:24px; margin-bottom:32px;">
               <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">భూషణ్ థంగిరాల</p>
               <p style="font-size:1.05rem; font-weight:600; color:#4f46e5; margin-bottom:12px;">ముఖ్య కార్యనిర్వహణ అధికారి, Zian Technologies LLP</p>
               <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
@@ -3836,7 +3836,7 @@
               </p>
             </div>
 
-            <div style="flex:1; min-width:260px; border-left:4px solid #7c3aed; padding-left:24px; margin-bottom:32px;">
+            <div class="sig-card" style="flex:1; min-width:260px; border-left:4px solid #7c3aed; padding-left:24px; margin-bottom:32px;">
               <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">డా. రవి కుమార్ CH</p>
               <p style="font-size:1.05rem; font-weight:600; color:#7c3aed; margin-bottom:12px;">ముఖ్య సాంకేతిక అధికారి, Zian Technologies LLP</p>
               <p style="font-size:1rem; color:#374151; line-height:1.8; margin-bottom:0;">
@@ -3846,7 +3846,7 @@
 
           </div>
 
-          <div style="border-left:4px solid #6366f1; padding-left:24px; margin-bottom:36px;">
+          <div class="sig-card" style="border-left:4px solid #6366f1; padding-left:24px; margin-bottom:36px;">
             <p style="font-size:1.35rem; font-weight:800; color:#1e1b4b; margin-bottom:4px;">శ్రీ భరత్ మేడా</p>
             <p style="font-size:1.05rem; font-weight:600; color:#6366f1; margin-bottom:4px;">కన్సల్టెంట్, Zian Technologies LLP</p>
             <p style="font-size:1rem; color:#374151;">బోర్డ్ సభ్యుడు, TalentAP</p>
@@ -3909,7 +3909,9 @@
     /* Cards / stat boxes */
     '.layer-card',
     '.stat-box',
-    '.stat-card'
+    '.stat-card',
+    /* Signatory cards (slide 44) */
+    '.sig-card'
   ].join(', ');
 
   const ANIM_FIRST_DELAY = 400;   /* ms — let track slide finish (0.45 s) */
