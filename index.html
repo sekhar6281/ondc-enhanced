@@ -514,6 +514,110 @@
     }
   }
 
+  /* ══════════════════════════════════
+     AUDIO PLAYER UI
+  ══════════════════════════════════ */
+
+  /* Play / Pause button — fixed bottom-right */
+  #audio-btn {
+    position: fixed;
+    bottom: 26px;
+    right: 26px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-size: 1.35rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 22px rgba(79,70,229,0.45);
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #audio-btn:hover { transform: scale(1.1); box-shadow: 0 6px 32px rgba(79,70,229,0.6); }
+  #audio-btn.playing { animation: audioPulse 1.8s ease-in-out infinite; }
+  #audio-btn.no-audio { opacity: 0.3; cursor: default; }
+  #audio-btn.no-audio:hover { transform: none; box-shadow: 0 4px 22px rgba(79,70,229,0.45); }
+
+  @keyframes audioPulse {
+    0%,100% { box-shadow: 0 4px 22px rgba(79,70,229,0.45); }
+    50%      { box-shadow: 0 4px 42px rgba(79,70,229,0.75), 0 0 0 10px rgba(79,70,229,0.1); }
+  }
+
+  /* Blue progress bar — runs across the very bottom of the screen */
+  #audio-progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: rgba(79,70,229,0.12);
+    z-index: 399;
+    display: none;
+    overflow: hidden;
+  }
+  #audio-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed, #a855f7);
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 10px rgba(79,70,229,0.55);
+  }
+
+  /* Tooltip for slides without audio */
+  #audio-tooltip {
+    position: fixed;
+    bottom: 92px;
+    right: 18px;
+    background: #1e1b4b;
+    color: #c7d2fe;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 401;
+    letter-spacing: 0.02em;
+  }
+  #audio-tooltip.show { opacity: 1; }
+
+  @media (max-width: 768px) {
+    #audio-btn    { bottom: 18px; right: 14px; width: 50px; height: 50px; font-size: 1.2rem; }
+    #audio-tooltip { bottom: 78px; right: 10px; }
+  }
+
+  /* ══════════════════════════════════
+     SLIDE AUTO-ADVANCE PROGRESS BAR
+     Blue line at bottom — fills across
+     each slide then jumps to the next.
+  ══════════════════════════════════ */
+  #slide-timer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: rgba(79,70,229,0.13);
+    z-index: 300;
+    pointer-events: none;
+  }
+  #slide-timer-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed, #a855f7);
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 10px rgba(79,70,229,0.5);
+  }
+
 </style>
 </head>
 <body>
@@ -3868,6 +3972,8 @@
     }
     /* Always start new slide from top */
     if (slides[n]) slides[n].scrollTop = 0;
+    /* Restart slide progress timer */
+    startSlideTimer();
     /* Animate elements into view */
     animateSlide(n);
   }
@@ -3909,9 +4015,50 @@
     animateSlide(cur, true);
   }
 
+  /* ─────────────────────────────────────────────
+     SLIDE AUTO-ADVANCE TIMER
+     Blue bar fills across the bottom of the screen.
+     When full → auto-advance to the next slide.
+     Manual navigation (key / swipe) resets & restarts.
+  ───────────────────────────────────────────── */
+  const SLIDE_DURATION_MS = 9000; /* 9 seconds per slide */
+  let _timerRaf   = null;
+  let _timerStart = 0;
+
+  /* Inject the progress bar element once */
+  (function () {
+    const bar  = document.createElement('div');
+    bar.id     = 'slide-timer-bar';
+    const fill = document.createElement('div');
+    fill.id    = 'slide-timer-fill';
+    bar.appendChild(fill);
+    document.body.appendChild(bar);
+  })();
+
+  function startSlideTimer() {
+    cancelAnimationFrame(_timerRaf);
+    const fill = document.getElementById('slide-timer-fill');
+    fill.style.width = '0%';
+    _timerStart = performance.now();
+
+    function tick(now) {
+      const pct = Math.min(((now - _timerStart) / SLIDE_DURATION_MS) * 100, 100);
+      fill.style.width = pct + '%';
+      if (pct < 100) {
+        _timerRaf = requestAnimationFrame(tick);
+      } else {
+        /* Line complete → move to next slide */
+        goTo(cur + 1);
+      }
+    }
+    _timerRaf = requestAnimationFrame(tick);
+  }
+
   setLang('en');
   /* Animate slide 1 on initial page load */
   animateSlide(0, true);
+  /* Start the auto-advance timer from slide 1 */
+  startSlideTimer();
 </script>
 
 </body>
