@@ -526,12 +526,12 @@
     width: 68px;
     height: 68px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f97316, #ef4444, #ec4899);
+    background: linear-gradient(135deg, #3b82f6, #4f46e5);
     color: #fff;
     font-size: 1.65rem;
     border: 3px solid rgba(255,255,255,0.35);
     cursor: pointer;
-    box-shadow: 0 6px 28px rgba(239,68,68,0.55), 0 2px 8px rgba(0,0,0,0.18);
+    box-shadow: 0 6px 28px rgba(79,70,229,0.55), 0 2px 8px rgba(0,0,0,0.18);
     z-index: 400;
     display: flex;
     align-items: center;
@@ -540,14 +540,14 @@
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
-  #audio-btn:hover { transform: scale(1.12); box-shadow: 0 8px 36px rgba(239,68,68,0.7), 0 2px 10px rgba(0,0,0,0.2); }
+  #audio-btn:hover { transform: scale(1.12); box-shadow: 0 8px 36px rgba(79,70,229,0.7), 0 2px 10px rgba(0,0,0,0.2); }
   #audio-btn.playing { animation: audioPulse 1.8s ease-in-out infinite; }
   #audio-btn.no-audio { opacity: 1; cursor: pointer; }
   #audio-btn.no-audio:hover { transform: scale(1.12); }
 
   @keyframes audioPulse {
-    0%,100% { box-shadow: 0 6px 28px rgba(239,68,68,0.55); }
-    50%      { box-shadow: 0 6px 48px rgba(239,68,68,0.85), 0 0 0 12px rgba(239,68,68,0.12); }
+    0%,100% { box-shadow: 0 6px 28px rgba(79,70,229,0.55); }
+    50%      { box-shadow: 0 6px 48px rgba(79,70,229,0.85), 0 0 0 12px rgba(79,70,229,0.12); }
   }
 
   /* Blue progress bar — runs across the very bottom of the screen */
